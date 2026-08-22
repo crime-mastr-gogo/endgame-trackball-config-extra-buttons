@@ -169,8 +169,8 @@
         , <&key_physical_attrs 180   150   1120  525   0    8    8>
 
         // Two switches replacing the left encoder
-        , <&key_physical_attrs 180   150   0     100   0    8    8>
         , <&key_physical_attrs 180   150   0     525   0    8    8>
+        , <&key_physical_attrs 180   150   0     100   0    8    8>
         ;
     };
 
