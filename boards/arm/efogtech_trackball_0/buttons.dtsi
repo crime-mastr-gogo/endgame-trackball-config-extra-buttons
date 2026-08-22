@@ -38,9 +38,9 @@
             , <&btns 5 (GPIO_ACTIVE_LOW)>
 
             // New buttons: IO1, IO2 and IO3
-            , <&btns 8 (GPIO_ACTIVE_LOW)>
-            , <&btns 9 (GPIO_ACTIVE_LOW)>
-            , <&btns 10 (GPIO_ACTIVE_LOW)>
+            , <&btns 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&btns 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&btns 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
             ;
     };
 
