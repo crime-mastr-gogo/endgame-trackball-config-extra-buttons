@@ -459,33 +459,19 @@ static void set_rgb_en(const bool en) {
     gpio_pin_set(p1, 3, en);
 }
 
-static void set_bl_en(const bool en) {
-    gpio_pin_configure(p0, 20, GPIO_OUTPUT);
-    gpio_pin_set(p0, 20, en);
-}
 
 static void rgb_hw_check_work_handler(struct k_work *work) {
     settings_load_subtree("board/rgb");
 
-    if (rgb_override) {
-        rgb_supported = true;
-    } else {
-        gpio_pin_configure(p0, 11, GPIO_INPUT | GPIO_PULL_DOWN);
-        gpio_pin_configure(p0, 15, GPIO_INPUT | GPIO_PULL_DOWN);
-
-        if (gpio_pin_get(p0, 11) && gpio_pin_get(p0, 15)) {
-            zaf_set_rgb_not_supported();
-            LOG_WRN("RGB not supported on this hardware!");
-        } else {
-            rgb_supported = true;
-        }
-
-        gpio_pin_configure(p0, 11, GPIO_DISCONNECTED);
-        gpio_pin_configure(p0, 15, GPIO_DISCONNECTED);
-    }
+    /*
+     * P0.11 and P0.15 are now used by the additional
+     * IO1 and IO2 physical switches.
+     */
+    rgb_supported = true;
 
     if (settings_log_source_id >= 0) {
-        log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, settings_log_saved_level);
+        log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id,
+                       settings_log_saved_level);
         settings_log_source_id = -1;
     }
 }
@@ -498,7 +484,6 @@ static int pinmux_efgtch_trckbl_init(void) {
 
     set_3v3_en(false);
     set_rgb_en(false);
-    set_bl_en(false);
 
 #ifdef CONFIG_LOG_DOMAIN_ID
     const uint32_t src_cnt = log_src_cnt_get(CONFIG_LOG_DOMAIN_ID);
