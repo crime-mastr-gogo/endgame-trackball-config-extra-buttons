@@ -5,7 +5,7 @@
  * Keep only the left encoder.
  * Retain its existing working positions 13 and 11.
  */
-#define DECLARE_ENCODERS sensor-bindings = <&rotenc_follower 13 11>
+#define DECLARE_ENCODERS sensor-bindings = <&rotenc_follower 13 14>
 
 / {
 	left_encoder: encoder_left {

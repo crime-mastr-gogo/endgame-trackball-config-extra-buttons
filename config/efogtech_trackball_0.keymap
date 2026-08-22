@@ -24,19 +24,21 @@
 			display-name = "Default";
 			DECLARE_ENCODERS;
 			bindings = <
-			    // Original eight buttons
+			    // Original eight buttons: positions 0-7
 			    &ltmkp LAYER_SNIPE ENTER  &ltmkp LAYER_SCROLL ESC
 			    &mkp MCLK                 &cdch LAYER_SCROLL 0
 			    &mkp LCLK                 &mkp RCLK
 			    &ltm LAYER_EXTRAS MB4     &ltm LAYER_DEVICE MB5
 
-			    // New buttons: IO1, IO2 and IO3
+			    // IO1, IO2 and IO3: positions 8-10
 			    &kp F13                   &kp F14
 			    &kp F15
 
-			    // Rotary encoders
-			    &kp C_VOL_UP              &kp LC(TAB)
-			    &kp C_VOL_DN              &kp LC(LS(TAB))
+			    // Switches replacing right encoder: positions 11-12
+			    &kp F16                   &kp F17
+
+			    // Left encoder directions: positions 13-14
+			    &kp C_VOL_DN              &kp C_VOL_UP
 		    >;
 		};
 
@@ -50,13 +52,15 @@
 			    &bst_undo      &bst_copy
 			    &trans         &bst_paste
 
-			    // IO1, IO2 and IO3 inherit the default layer
+			    // IO1, IO2 and IO3
 			    &trans         &trans
 			    &trans
 
-			    // Rotary encoders
-			    &kp C_VOL_UP   &kp LC(TAB)
-			    &kp C_VOL_DN   &kp LC(LS(TAB))
+			    // Two switches replacing right encoder
+			    &trans         &trans
+
+			    // Left encoder
+			    &kp C_VOL_DN   &kp C_VOL_UP
 	   		>;
 		};
 
@@ -70,13 +74,15 @@
 			    &af_toggle AF_TOG    &bt BT_PRV
 			    &studio_unlock       &trans
 
-			    // IO1, IO2 and IO3 inherit the default layer
+			    // IO1, IO2 and IO3
 			    &trans              &trans
 			    &trans
 
-			    // Rotary encoders
-			    &kp C_VOL_UP         &kp LC(TAB)
-			    &kp C_VOL_DN         &kp LC(LS(TAB))
+			    // Two switches replacing right encoder
+			    &trans              &trans
+
+			    // Left encoder
+			    &kp C_VOL_DN         &kp C_VOL_UP
 		   	>;
 		};
 
@@ -90,13 +96,15 @@
 			    &rrl 1              &scrlsens P2SM_DEC 1
 			    &sens P2SM_DEC 1    &sens P2SM_INC 1
 
-			    // IO1, IO2 and IO3 inherit the default layer
+			    // IO1, IO2 and IO3
 			    &trans              &trans
 			    &trans
 
-			    // Rotary encoders
-			    &sens P2SM_DEC 1    &scrlsens P2SM_INC 1
-			    &sens P2SM_INC 1    &scrlsens P2SM_DEC 1
+			    // Two switches replacing right encoder
+			    &trans              &trans
+
+			    // Left encoder
+			    &sens P2SM_INC 1    &sens P2SM_DEC 1
 		  	>;
 		};
 
@@ -110,12 +118,14 @@
 			    &trans           &trans
 			    &trans           &trans
 
-			    // IO1, IO2 and IO3 inherit the default layer
+			    // IO1, IO2 and IO3
 			    &trans           &trans
 			    &trans
 
-			    // Rotary encoders
-			    &kp LEFT         &kp RIGHT
+			    // Two switches replacing right encoder
+			    &trans           &trans
+
+			    // Left encoder
 			    &kp RIGHT        &kp LEFT
 	   		>;
 		};
@@ -130,13 +140,15 @@
 			    &trans        &trans
 			    &trans        &trans
 
-			    // IO1, IO2 and IO3 inherit the default layer
+			    // IO1, IO2 and IO3
 			    &trans        &trans
 			    &trans
 
-			    // Rotary encoders
-			    &kp C_VOL_UP  &kp LC(TAB)
-			    &kp C_VOL_DN  &kp LC(LS(TAB))
+			    // Two switches replacing right encoder
+			    &trans        &trans
+
+			    // Left encoder
+			    &kp C_VOL_DN  &kp C_VOL_UP
 		    >;
 		};
 	};
