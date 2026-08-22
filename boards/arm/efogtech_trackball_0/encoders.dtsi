@@ -1,5 +1,11 @@
 #include "behaviors/follower.dtsi"
-#define DECLARE_ENCODERS sensor-bindings = <&rotenc_follower 13 11 &rotenc_follower 12 14>
+
+/*
+ * Diagnostic build:
+ * Keep only the left encoder.
+ * Retain its existing working positions 13 and 11.
+ */
+#define DECLARE_ENCODERS sensor-bindings = <&rotenc_follower 13 11>
 
 / {
 	left_encoder: encoder_left {
@@ -10,20 +16,13 @@
 		pulses = <4>;
 	};
 
-	right_encoder: encoder_right {
-		compatible = "efog,ec11-ish";
-		a-gpios = <&gpio1 8 0>;
-		b-gpios = <&gpio1 9 0>;
-		steps = <48>;
-		pulses = <4>;
-	};
-
 	sensors: sensors {
 		compatible = "zmk,keymap-sensors";
-		sensors = <&left_encoder &right_encoder>;
+		sensors = <&left_encoder>;
 		triggers-per-rotation = <12>;
 	};
 };
 
-&left_encoder { status = "okay"; };
-&right_encoder { status = "okay"; };
+&left_encoder {
+	status = "okay";
+};
