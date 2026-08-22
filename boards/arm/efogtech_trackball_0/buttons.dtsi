@@ -142,30 +142,35 @@
         transform = <&default_transform>;
         kscan = <&kscan0>;
 
-        keys  //               w     h     x     y     rot  rx   ry
+                keys  //               w     h     x     y     rot  rx   ry
 
-        // Original eight buttons
-        = <&key_physical_attrs 200   150   275   0     0    8    8>
-        , <&key_physical_attrs 200   150   525   0     0    8    8>
-        , <&key_physical_attrs 150   375   75    25    0    8    8>
-        , <&key_physical_attrs 150   375   775   25    0    8    8>
-        , <&key_physical_attrs 150   375   75    450   0    8    8>
-        , <&key_physical_attrs 150   375   775   450   0    8    8>
-        , <&key_physical_attrs 200   150   275   700   0    8    8>
-        , <&key_physical_attrs 200   150   525   700   0    8    8>
+        /*
+         * Original eight buttons.
+         * Their relative positions and dimensions are unchanged.
+         * The complete group is shifted right by 150 units to
+         * create space for the two left-side switches.
+         */
+        = <&key_physical_attrs 200   150   425   0     0    8    8>
+        , <&key_physical_attrs 200   150   675   0     0    8    8>
+        , <&key_physical_attrs 150   375   225   25    0    8    8>
+        , <&key_physical_attrs 150   375   925   25    0    8    8>
+        , <&key_physical_attrs 150   375   225   450   0    8    8>
+        , <&key_physical_attrs 150   375   925   450   0    8    8>
+        , <&key_physical_attrs 200   150   425   700   0    8    8>
+        , <&key_physical_attrs 200   150   675   700   0    8    8>
 
-        // IO1, IO2 and IO3
-        , <&key_physical_attrs 120   120   230   850   0    8    8>
-        , <&key_physical_attrs 120   120   370   850   0    8    8>
-        , <&key_physical_attrs 120   120   510   850   0    8    8>
+        // IO1, IO2 and IO3: centred along the bottom
+        , <&key_physical_attrs 120   120   450   900   0    8    8>
+        , <&key_physical_attrs 120   120   590   900   0    8    8>
+        , <&key_physical_attrs 120   120   730   900   0    8    8>
 
         // Two switches replacing the right encoder
-        , <&key_physical_attrs 120   120   650   850   0    8    8>
-        , <&key_physical_attrs 120   120   790   850   0    8    8>
+        , <&key_physical_attrs 180   150   1120  100   0    8    8>
+        , <&key_physical_attrs 180   150   1120  525   0    8    8>
 
         // Two switches replacing the left encoder
-        , <&key_physical_attrs 120   120   440   990   0    8    8>
-        , <&key_physical_attrs 120   120   580   990   0    8    8>
+        , <&key_physical_attrs 180   150   0     100   0    8    8>
+        , <&key_physical_attrs 180   150   0     525   0    8    8>
         ;
     };
 
