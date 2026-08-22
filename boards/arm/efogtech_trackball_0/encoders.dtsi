@@ -1,28 +1,11 @@
-#include "behaviors/follower.dtsi"
-
 /*
- * Diagnostic build:
- * Keep only the left encoder.
- * Retain its existing working positions 13 and 11.
+ * Both rotary encoders have been removed.
+ *
+ * Their four signal pins are now configured as physical
+ * switch inputs in buttons.dtsi:
+ *
+ * Right encoder: P1.08 and P1.09
+ * Left encoder:  P0.17 and P0.16
+ *
+ * No encoder sensor nodes or sensor bindings remain.
  */
-#define DECLARE_ENCODERS sensor-bindings = <&rotenc_follower 13 14>
-
-/ {
-	left_encoder: encoder_left {
-		compatible = "efog,ec11-ish";
-		a-gpios = <&gpio0 17 0>;
-		b-gpios = <&gpio0 16 0>;
-		steps = <48>;
-		pulses = <4>;
-	};
-
-	sensors: sensors {
-		compatible = "zmk,keymap-sensors";
-		sensors = <&left_encoder>;
-		triggers-per-rotation = <12>;
-	};
-};
-
-&left_encoder {
-	status = "okay";
-};

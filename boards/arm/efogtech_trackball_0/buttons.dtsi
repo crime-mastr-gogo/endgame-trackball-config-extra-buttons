@@ -23,12 +23,16 @@
 
     /*
      * Composite scanner:
-     * - Existing GPIO0 buttons
-     * - One independent scanner for each former right-encoder pin
+     * - Original buttons and IO1/IO2/IO3
+     * - Two switches replacing the right encoder
+     * - Two switches replacing the left encoder
+     *
+     * Each former encoder pin has its own scanner to avoid
+     * the multi-GPIO scanner bootloop encountered previously.
      */
     kscan0: kscan_composite {
         compatible = "zmk,kscan-composite";
-        rows = <13>;
+        rows = <15>;
         columns = <1>;
 
         original_buttons {
@@ -43,6 +47,16 @@
         right_switch_b {
             kscan = <&kscan_right_b>;
             row-offset = <12>;
+        };
+
+        left_switch_a {
+            kscan = <&kscan_left_a>;
+            row-offset = <13>;
+        };
+
+        left_switch_b {
+            kscan = <&kscan_left_b>;
+            row-offset = <14>;
         };
     };
 
@@ -66,6 +80,7 @@
             ;
     };
 
+    // P1.08: former right-encoder A pin
     kscan_right_a: kscan_right_a {
         compatible = "zmk,kscan-gpio-direct";
         input-gpios
@@ -73,10 +88,27 @@
             ;
     };
 
+    // P1.09: former right-encoder B pin
     kscan_right_b: kscan_right_b {
         compatible = "zmk,kscan-gpio-direct";
         input-gpios
             = <&gpio1 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P0.17: former left-encoder A pin
+    kscan_left_a: kscan_left_a {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio0 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P0.16: former left-encoder B pin
+    kscan_left_b: kscan_left_b {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio0 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
             ;
     };
 
@@ -98,14 +130,14 @@
                 // Two switches replacing the right encoder
                 RC(11, 0) RC(12, 0)
 
-                // Two virtual directions for the left encoder
+                // Two switches replacing the left encoder
                 RC(13, 0) RC(14, 0)
             >;
     };
 
     physical_layout0: physical_layout_0 {
         compatible = "zmk,physical-layout";
-        display-name = "13 Buttons + Left Encoder";
+        display-name = "15 Buttons";
 
         transform = <&default_transform>;
         kscan = <&kscan0>;
@@ -123,17 +155,17 @@
         , <&key_physical_attrs 200   150   525   700   0    8    8>
 
         // IO1, IO2 and IO3
-        , <&key_physical_attrs 120   120   300   850   0    8    8>
-        , <&key_physical_attrs 120   120   440   850   0    8    8>
-        , <&key_physical_attrs 120   120   580   850   0    8    8>
+        , <&key_physical_attrs 120   120   230   850   0    8    8>
+        , <&key_physical_attrs 120   120   370   850   0    8    8>
+        , <&key_physical_attrs 120   120   510   850   0    8    8>
 
         // Two switches replacing the right encoder
-        , <&key_physical_attrs 120   120   720   850   0    8    8>
-        , <&key_physical_attrs 120   120   860   850   0    8    8>
+        , <&key_physical_attrs 120   120   650   850   0    8    8>
+        , <&key_physical_attrs 120   120   790   850   0    8    8>
 
-        // Left-encoder virtual directions
-        , <&key_physical_attrs 35    100   15    750   0    8    8>
-        , <&key_physical_attrs 100   35    65    850   0    8    8>
+        // Two switches replacing the left encoder
+        , <&key_physical_attrs 120   120   440   990   0    8    8>
+        , <&key_physical_attrs 120   120   580   990   0    8    8>
         ;
     };
 
@@ -145,7 +177,7 @@
             physical-layout = <&physical_layout0>;
             positions =
                 <0>, <1>, <2>, <3>, <4>, <5>, <6>, <7>,
-                <8>, <9>, <10>, <11>, <12>;
+                <8>, <9>, <10>, <11>, <12>, <13>, <14>;
         };
     };
 };

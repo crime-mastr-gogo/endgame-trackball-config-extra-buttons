@@ -22,7 +22,6 @@
 
 		default_layer {
 			display-name = "Default";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons: positions 0-7
 			    &ltmkp LAYER_SNIPE ENTER  &ltmkp LAYER_SCROLL ESC
@@ -37,14 +36,13 @@
 			    // Switches replacing right encoder: positions 11-12
 			    &kp F16                   &kp F17
 
-			    // Left encoder directions: positions 13-14
-			    &kp C_VOL_DN              &kp C_VOL_UP
+			    // Switches replacing left encoder: positions 13-14
+			    &kp F18                   &kp F19
 		    >;
 		};
 
 		layer1 {
 			display-name = "Extras";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons
 			    &bst_copy      &bst_paste
@@ -59,14 +57,13 @@
 			    // Two switches replacing right encoder
 			    &trans         &trans
 
-			    // Left encoder
-			    &kp C_VOL_DN   &kp C_VOL_UP
+			    // Two switches replacing left encoder
+			    &trans         &trans
 	   		>;
 		};
 
 		layer2 {
 			display-name = "Device";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons
 			    &mui_or_dgl          &bt BT_CLR
@@ -81,14 +78,13 @@
 			    // Two switches replacing right encoder
 			    &trans              &trans
 
-			    // Left encoder
-			    &kp C_VOL_DN         &kp C_VOL_UP
+			    // Two switches replacing left encoder
+			    &trans              &trans
 		   	>;
 		};
 
 		layer3 {
 			display-name = "Scroll";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons
 			    &trans              &trans
@@ -103,14 +99,13 @@
 			    // Two switches replacing right encoder
 			    &trans              &trans
 
-			    // Left encoder
-			    &sens P2SM_INC 1    &sens P2SM_DEC 1
+			    // Two switches replacing left encoder
+			    &trans              &trans
 		  	>;
 		};
 
 		layer4 {
 			display-name = "Snipe";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons
 			    &trans           &soft_off
@@ -125,14 +120,13 @@
 			    // Two switches replacing right encoder
 			    &trans           &trans
 
-			    // Left encoder
-			    &kp RIGHT        &kp LEFT
+			    // Two switches replacing left encoder
+			    &trans           &trans
 	   		>;
 		};
 
 		layer5 {
 			display-name = "User";
-			DECLARE_ENCODERS;
 			bindings = <
 			    // Original eight buttons
 			    &trans        &trans
@@ -147,8 +141,8 @@
 			    // Two switches replacing right encoder
 			    &trans        &trans
 
-			    // Left encoder
-			    &kp C_VOL_DN  &kp C_VOL_UP
+			    // Two switches replacing left encoder
+			    &trans        &trans
 		    >;
 		};
 	};
