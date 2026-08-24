@@ -14,6 +14,7 @@
 #define LAYER_SCROLL       3
 #define LAYER_SNIPE        4
 #define LAYER_USER         5
+#define LAYER_STANDARD_SCROLL 6
 #endif
 
 / {
@@ -145,14 +146,35 @@
 			    &trans        &trans
 		    >;
 		};
+				layer6 {
+			display-name = "Standard Scroll";
+			bindings = <
+			    // Original eight buttons
+			    &trans        &trans
+			    &trans        &trans
+			    &trans        &trans
+			    &trans        &trans
+
+			    // IO1, IO2 and IO3
+			    &trans        &trans
+			    &trans
+
+			    // Two switches replacing right encoder
+			    &trans        &trans
+
+			    // Two switches replacing left encoder
+			    &trans        &trans
+			>;
+		};
 	};
 
-	trackball {
+		trackball {
+		// Default mode: high-resolution twist scrolling
 		input-processors = <&zip_bistable_twist_scaler>,
-							<&zip_twist_full_notch_scaler>,
 						   <&zip_pointer_accel>, <&zip_scroll_accel>, <&zip_rotate_pointer>,
-		                   <&esb_ip>, <&zip_ble_report_rate_limit>;
+						   <&esb_ip>, <&zip_ble_report_rate_limit>;
 
+		// Existing drag-scroll layer takes first priority
 		scroll {
 			layers = <LAYER_SCROLL>;
 			input-processors = <&zip_bistable_scroll_xy_scaler>, <&zip_axis_clamper>,
@@ -161,9 +183,19 @@
 							   <&esb_ip>, <&zip_ble_report_rate_limit>;
 		};
 
+		// Existing snipe layer takes second priority
 		snipe {
 			layers = <LAYER_SNIPE>;
 			input-processors = <&zip_bistable_snipe_scaler>, <&zip_rotate_pointer>,
+							   <&esb_ip>, <&zip_ble_report_rate_limit>;
+		};
+
+		// Toggled mode: standard full-notch twist scrolling
+		standard_scroll {
+			layers = <LAYER_STANDARD_SCROLL>;
+			input-processors = <&zip_bistable_twist_scaler>,
+							   <&zip_twist_full_notch_scaler>,
+							   <&zip_pointer_accel>, <&zip_scroll_accel>, <&zip_rotate_pointer>,
 							   <&esb_ip>, <&zip_ble_report_rate_limit>;
 		};
 	};
