@@ -31,7 +31,7 @@
 			    &ltm LAYER_EXTRAS MB4     &ltm LAYER_DEVICE MB5
 
 			    // IO1, IO2 and IO3: positions 8-10
-			    &kp F13                   &kp F14
+			    &scroll_mode_toggle       &kp F14
 			    &kp F15
 
 			    // Switches replacing right encoder: positions 11-12
