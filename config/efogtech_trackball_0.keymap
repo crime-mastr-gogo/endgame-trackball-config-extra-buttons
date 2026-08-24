@@ -149,6 +149,7 @@
 
 	trackball {
 		input-processors = <&zip_bistable_twist_scaler>,
+							<&zip_twist_full_notch_scaler>,
 						   <&zip_pointer_accel>, <&zip_scroll_accel>, <&zip_rotate_pointer>,
 		                   <&esb_ip>, <&zip_ble_report_rate_limit>;
 

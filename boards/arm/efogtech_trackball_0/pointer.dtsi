@@ -63,7 +63,19 @@
 		slot1 = <ZBS_RUNTIME>;
 		zrc-prefix = "bst/twist";
 	};
-
+	// Convert high-resolution twist output into complete wheel-notch units.
+	// ZMK smooth scrolling uses 16 high-resolution units per standard notch.
+	zip_twist_full_notch_scaler: zip_twist_full_notch_scaler {
+		compatible = "zmk,input-processor-bistable-scaler";
+		#input-processor-cells = <0>;
+		type = <INPUT_EV_REL>;
+		codes = <INPUT_REL_WHEEL INPUT_REL_HWHEEL>;
+		default-coef = <ZBS_SCALE(16, 1)>;
+		default-coef-slot1 = <ZBS_SCALE(16, 1)>;
+		slot0 = <ZBS_RUNTIME>;
+		slot1 = <ZBS_RUNTIME>;
+		zrc-prefix = "bst/twist-full-notch";
+	};
 	zip_bistable_scroll_xy_scaler: zip_bistable_scroll_xy_scaler {
 		compatible = "zmk,input-processor-bistable-scaler";
 		#input-processor-cells = <0>;
