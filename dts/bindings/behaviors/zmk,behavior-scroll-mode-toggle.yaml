@@ -1,0 +1,5 @@
+description: Toggle between high-resolution and standard twist scrolling
+
+compatible: "zmk,behavior-scroll-mode-toggle"
+
+include: zero_param.yaml

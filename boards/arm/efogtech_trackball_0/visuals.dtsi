@@ -84,9 +84,26 @@
 			label = "Standard scroll mode";
 			event-type = "layer";
 			layer-index = <LAYER_STANDARD_SCROLL>;
-			colors = [ff 80 00];
+			colors = [00 00 00];
 			persistent;
-			feedback-pattern = <65 25 65>;
+		};
+
+		standard_scroll_selected {
+			label = "Standard scroll selected";
+			event-type = "custom";
+			custom-event-name = "standard-scroll-selected";
+			colors = [ff 00 00];
+			animation = "flash";
+			flash-duration-ms = <120>;
+		};
+
+		high_res_scroll_selected {
+			label = "High-resolution scroll selected";
+			event-type = "custom";
+			custom-event-name = "high-res-scroll-selected";
+			colors = [00 ff 00];
+			animation = "flash";
+			flash-duration-ms = <120>;
 		};
 
 		idle {

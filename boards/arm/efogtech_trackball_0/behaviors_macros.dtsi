@@ -221,6 +221,12 @@
 			display-name = "Power off";
 		};
 
+				scroll_mode_toggle: scroll_mode_toggle {
+			compatible = "zmk,behavior-scroll-mode-toggle";
+			display-name = "Toggle Standard/High-Res Scroll";
+			#binding-cells = <0>;
+		};
+
 		bst_copy: bst_copy {
 			compatible = "zmk,behavior-bistable";
 			display-name = "Copy (OS-dependent)";
