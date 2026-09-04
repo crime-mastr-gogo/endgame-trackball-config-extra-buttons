@@ -1,0 +1,14 @@
+description: Adjust pointer or twist sensitivity with adaptive feedback
+
+compatible: "zmk,behavior-sensitivity-feedback"
+
+include: zero_param.yaml
+
+properties:
+  scroll:
+    type: boolean
+    description: Adjust twist-scroll sensitivity instead of pointer sensitivity
+
+  increase:
+    type: boolean
+    description: Increase sensitivity instead of decreasing it

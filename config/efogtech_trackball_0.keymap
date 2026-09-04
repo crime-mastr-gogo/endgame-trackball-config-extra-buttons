@@ -24,146 +24,137 @@
 		default_layer {
 			display-name = "Default";
 			bindings = <
-			    // Original eight buttons: positions 0-7
-			    &ltmkp LAYER_SNIPE ENTER  &ltmkp LAYER_SCROLL ESC
-			    &mkp MCLK                 &cdch LAYER_SCROLL 0
-			    &mkp LCLK                 &mkp RCLK
-			    &ltm LAYER_EXTRAS MB4     &ltm LAYER_DEVICE MB5
+				// Original eight buttons
+				&ltmkp LAYER_SNIPE LC(C)    &ltmkp LAYER_SCROLL LC(V)
+				&kp DELETE                  &kp ENTER
+				&mkp LCLK                   &mkp RCLK
+				&mkp MCLK                   &kp LG(LS(S))
 
-			    // IO1, IO2 and IO3: positions 8-10
-			    &scroll_mode_toggle       &kp F14
-			    &kp F15
-
-			    // Switches replacing right encoder: positions 11-12
-			    &kp F16                   &kp F17
-
-			    // Switches replacing left encoder: positions 13-14
-			    &kp F18                   &kp F19
-		    >;
+				/*
+				 * Internal order:
+				 * Left A, Left B, Right A, Right B, IO1, IO2, IO3
+				 *
+				 * Studio displays Left B before Left A because only
+				 * their visual coordinates were interchanged.
+				 */
+				&trans                      &mo LAYER_EXTRAS
+				&trans                      &trans
+				&trans                      &trans
+				&mo LAYER_DEVICE
+			>;
 		};
 
 		layer1 {
 			display-name = "Extras";
 			bindings = <
-			    // Original eight buttons
-			    &bst_copy      &bst_paste
-			    &bst_cut       &bst_undo
-			    &bst_undo      &bst_copy
-			    &trans         &bst_paste
+				// Original eight buttons
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
 
-			    // IO1, IO2 and IO3
-			    &trans         &trans
-			    &trans
+								// Left A, Left B, Right A, Right B
+				&twist_sens_up_fb           &trans
+				&twist_sens_down_fb         &bt BT_NXT
 
-			    // Two switches replacing right encoder
-			    &trans         &trans
-
-			    // Two switches replacing left encoder
-			    &trans         &trans
-	   		>;
+				// IO1, IO2 and IO3
+				&bt BT_PRV                  &ptr_sens_up_fb
+				&ptr_sens_down_fb
+			>;
 		};
 
 		layer2 {
 			display-name = "Device";
 			bindings = <
-			    // Original eight buttons
-			    &mui_or_dgl          &bt BT_CLR
-			    &bst_tog ZBS_TOG     &bt BT_NXT
-			    &af_toggle AF_TOG    &bt BT_PRV
-			    &studio_unlock       &trans
+				// Original eight buttons
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
 
-			    // IO1, IO2 and IO3
-			    &trans              &trans
-			    &trans
+				// Left A, Left B, Right A, Right B
+				&studio_unlock              &power_off_fb
+				&scroll_mode_toggle         &clear_all_bt_fb
 
-			    // Two switches replacing right encoder
-			    &trans              &trans
-
-			    // Two switches replacing left encoder
-			    &trans              &trans
-		   	>;
+				// IO1, IO2 and IO3
+				&clear_current_bt_fb        &trans
+				&trans
+			>;
 		};
 
 		layer3 {
 			display-name = "Scroll";
 			bindings = <
-			    // Original eight buttons
-			    &trans              &trans
-			    &trans              &scrlsens P2SM_INC 1
-			    &rrl 1              &scrlsens P2SM_DEC 1
-			    &sens P2SM_DEC 1    &sens P2SM_INC 1
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
 
-			    // IO1, IO2 and IO3
-			    &trans              &trans
-			    &trans
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
 
-			    // Two switches replacing right encoder
-			    &trans              &trans
-
-			    // Two switches replacing left encoder
-			    &trans              &trans
-		  	>;
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
 		};
 
 		layer4 {
 			display-name = "Snipe";
 			bindings = <
-			    // Original eight buttons
-			    &trans           &soft_off
-			    &trans           &trans
-			    &trans           &trans
-			    &trans           &trans
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
 
-			    // IO1, IO2 and IO3
-			    &trans           &trans
-			    &trans
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
 
-			    // Two switches replacing right encoder
-			    &trans           &trans
-
-			    // Two switches replacing left encoder
-			    &trans           &trans
-	   		>;
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
 		};
 
 		layer5 {
 			display-name = "User";
 			bindings = <
-			    // Original eight buttons
-			    &trans        &trans
-			    &trans        &trans
-			    &trans        &trans
-			    &trans        &trans
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
 
-			    // IO1, IO2 and IO3
-			    &trans        &trans
-			    &trans
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
 
-			    // Two switches replacing right encoder
-			    &trans        &trans
-
-			    // Two switches replacing left encoder
-			    &trans        &trans
-		    >;
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
 		};
-				layer6 {
+
+		layer6 {
 			display-name = "Standard Scroll";
 			bindings = <
-			    // Original eight buttons
-			    &trans        &trans
-			    &trans        &trans
-			    &trans        &trans
-			    &trans        &trans
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
 
-			    // IO1, IO2 and IO3
-			    &trans        &trans
-			    &trans
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
 
-			    // Two switches replacing right encoder
-			    &trans        &trans
-
-			    // Two switches replacing left encoder
-			    &trans        &trans
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
 			>;
 		};
 	};

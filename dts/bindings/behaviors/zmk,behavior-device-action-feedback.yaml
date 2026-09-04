@@ -1,0 +1,5 @@
+description: Trigger adaptive feedback for a device-management action
+
+compatible: "zmk,behavior-device-action-feedback"
+
+include: one_param.yaml

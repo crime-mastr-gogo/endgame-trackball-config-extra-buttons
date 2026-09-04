@@ -42,35 +42,61 @@
 			persistent;
 		};
 
-		layer_extras {
-			event-type = "layer";
-			layer-index = <LAYER_EXTRAS>;
-			colors = [00 00 00];
-			persistent;
-		};
+                layer_extras {
+                        label = "Layer 1";
+                        event-type = "layer";
+                        layer-index = <LAYER_EXTRAS>;
+                        colors = [00 40 40];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                        feedback-pattern = <150>;
+                        persistent;
+                };
 
-		layer_device {
-			event-type = "layer";
-			layer-index = <LAYER_DEVICE>;
-			colors = [80 00 FF];
-			animation = "flash";
-			flash-duration-ms = <30000>;
-			flash-ease-in-ms = <250>;
-			feedback-pattern = <40>;
-			persistent;
-		};
+                layer_device {
+                        label = "Layer 2";
+                        event-type = "layer";
+                        layer-index = <LAYER_DEVICE>;
+                        colors = [40 20 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                        feedback-pattern = <150 50 150>;
+                        persistent;
+                };
 
 		layer_scroll {
+			label = "Ball-scroll";
 			event-type = "layer";
 			layer-index = <LAYER_SCROLL>;
-			colors = [00 00 00];
+			colors = [
+				40 00 00
+				40 20 00
+				40 40 00
+				00 40 00
+				00 40 40
+				00 00 40
+				20 00 40
+			];
+            animation = "breathe";
+            breathe-duration-ms = <500>;
 			persistent;
 		};
 
 		layer_snipe {
+			label = "Snipe";
 			event-type = "layer";
 			layer-index = <LAYER_SNIPE>;
-			colors = [ff 00 00];
+			colors = [
+				40 00 00
+				40 20 00
+				40 40 00
+				00 40 00
+				00 40 40
+				00 00 40
+				20 00 40
+			];
+            animation = "breathe";
+            breathe-duration-ms = <500>;
 			persistent;
 		};
 
@@ -87,23 +113,144 @@
 			colors = [00 00 00];
 			persistent;
 		};
-
-		standard_scroll_selected {
-			label = "Standard scroll selected";
+				clear_current_bt_feedback {
+			label = "Clear current Bluetooth profile";
 			event-type = "custom";
-			custom-event-name = "standard-scroll-selected";
-			colors = [ff 00 00];
-			animation = "flash";
-			flash-duration-ms = <120>;
+			custom-event-name = "clear-current-bt-feedback";
+			colors = [FF 80 00];
+			animation = "blink";
+			blink-on-ms = <120>;
+			blink-off-ms = <80>;
+			flash-duration-ms = <600>;
+			feedback-pattern = <150 50 150 50 150>;
 		};
+
+		clear_all_bt_feedback {
+			label = "Clear all Bluetooth profiles";
+			event-type = "custom";
+			custom-event-name = "clear-all-bt-feedback";
+			colors = [FF 00 00];
+			animation = "blink";
+			blink-on-ms = <120>;
+			blink-off-ms = <80>;
+			flash-duration-ms = <600>;
+			feedback-pattern = <250 50 250 50 250>;
+		};
+
+		power_off_feedback {
+			label = "Power off";
+			event-type = "custom";
+			custom-event-name = "power-off-feedback";
+			colors = [FF 00 00];
+			animation = "flash";
+			flash-duration-ms = <700>;
+			flash-ease-out-ms = <700>;
+			flash-ease-out-fn = "quad-out";
+			feedback-pattern = <250>;
+		};
+
+		pointer_sensitivity_increased {
+			label = "Pointer sensitivity increased";
+			event-type = "custom";
+			custom-event-name = "pointer-sensitivity-increased";
+			colors = [00 FF 00];
+			animation = "flash";
+			flash-duration-ms = <250>;
+			feedback-pattern = <100>;
+		};
+
+		pointer_sensitivity_decreased {
+			label = "Pointer sensitivity decreased";
+			event-type = "custom";
+			custom-event-name = "pointer-sensitivity-decreased";
+			colors = [FF 80 00];
+			animation = "flash";
+			flash-duration-ms = <250>;
+			feedback-pattern = <100>;
+		};
+
+                pointer_sensitivity_lowest {
+                        label = "Pointer sensitivity at lowest level";
+                        event-type = "custom";
+                        custom-event-name = "pointer-sensitivity-lowest";
+                        colors = [
+                                FF 00 00
+                                FF 80 00
+                                FF FF 00
+                                00 FF 00
+                                00 FF FF
+                                00 00 FF
+                                80 00 FF
+                        ];
+                        animation = "blink";
+                        blink-on-ms = <142>;
+                        blink-off-ms = <1>;
+                        flash-duration-ms = <1000>;
+                        feedback-pattern = <150 50 150 50 150>;
+                };
+
+		twist_sensitivity_increased {
+			label = "Twist sensitivity increased";
+			event-type = "custom";
+			custom-event-name = "twist-sensitivity-increased";
+			colors = [00 00 FF];
+			animation = "flash";
+			flash-duration-ms = <250>;
+			feedback-pattern = <100>;
+		};
+
+		twist_sensitivity_decreased {
+			label = "Twist sensitivity decreased";
+			event-type = "custom";
+			custom-event-name = "twist-sensitivity-decreased";
+			colors = [FF FF 00];
+			animation = "flash";
+			flash-duration-ms = <250>;
+			feedback-pattern = <100>;
+		};
+
+		twist_sensitivity_lowest {
+			label = "Twist sensitivity at lowest level";
+			event-type = "custom";
+			custom-event-name = "twist-sensitivity-lowest";
+			colors = [
+				FF 00 00
+				FF 80 00
+				FF FF 00
+				00 FF 00
+				00 FF FF
+				00 00 FF
+				80 00 FF
+			];
+			animation = "blink";
+			blink-on-ms = <142>;
+			blink-off-ms = <1>;
+			flash-duration-ms = <1000>;
+			feedback-pattern = <150 50 150 50 150>;
+		};
+
+                standard_scroll_selected {
+                        label = "Standard scroll selected";
+                        event-type = "custom";
+                        custom-event-name = "standard-scroll-selected";
+                        colors = [FF 00 00];
+                        animation = "blink";
+                        blink-on-ms = <150>;
+                        blink-off-ms = <50>;
+                        flash-duration-ms = <600>;
+                        feedback-pattern = <150 50 150 50 150>;
+                };
 
 		high_res_scroll_selected {
 			label = "High-resolution scroll selected";
 			event-type = "custom";
 			custom-event-name = "high-res-scroll-selected";
-			colors = [00 ff 00];
-			animation = "flash";
-			flash-duration-ms = <120>;
+			colors = [00 FF 00];
+			animation = "blink";
+			blink-on-ms = <150>;
+			blink-off-ms = <50>;
+			flash-duration-ms = <600>;
+			feedback-pattern = <150 50 150 50 150>;
 		};
 
 		idle {
@@ -125,12 +272,10 @@
 		studio_unlocked {
 			label = "Studio unlocked";
 			event-type = "studio-unlock";
-			colors = [ff 00 00];
+			colors = [00 FF 00];
 			animation = "flash";
-			flash-duration-ms = <1000>;
-			flash-ease-in-ms = <150>;
-			flash-ease-out-ms = <150>;
-			feedback-pattern = <65>;
+			flash-duration-ms = <350>;
+			feedback-pattern = <150>;
 		};
 
 		evt_usb_conn {
@@ -139,7 +284,7 @@
 			colors = [00 ff 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <65>;
+			feedback-pattern = <150>;
 		};
 
 		evt_usb_disconn {
@@ -150,7 +295,7 @@
 			flash-duration-ms = <350>;
 			flash-ease-in-ms = <150>;
 			flash-ease-out-ms = <150>;
-			feedback-pattern = <65>;
+			feedback-pattern = <150>;
 		};
 
 		mui_adv {
@@ -166,63 +311,53 @@
 		};
 
 		evt_ble_1 {
-			label = "Bluetooth device";
+			label = "Bluetooth profile 1";
 			event-type = "ble-profile";
-			colors = [00 40 ff];
+			ble-profile-index = <0>;
+			colors = [00 00 FF];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			flash-ease-in-ms = <100>;
-			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
-			ble-profile-index = <0>;
+			feedback-pattern = <150>;
 		};
 
 		evt_ble_2 {
-			label = "Bluetooth device";
+			label = "Bluetooth profile 2";
 			event-type = "ble-profile";
-			colors = [00 40 ff];
+			ble-profile-index = <1>;
+			colors = [00 FF 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			flash-ease-in-ms = <100>;
-			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
-			ble-profile-index = <1>;
+			feedback-pattern = <150>;
 		};
 
 		evt_ble_3 {
-			label = "Bluetooth device";
+			label = "Bluetooth profile 3";
 			event-type = "ble-profile";
-			colors = [00 40 ff];
+			ble-profile-index = <2>;
+			colors = [FF FF 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			flash-ease-in-ms = <100>;
-			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
-			ble-profile-index = <2>;
+			feedback-pattern = <150>;
 		};
 
 		evt_ble_4 {
-			label = "Bluetooth device";
+			label = "Bluetooth profile 4";
 			event-type = "ble-profile";
-			colors = [00 40 ff];
+			ble-profile-index = <3>;
+			colors = [FF 00 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			flash-ease-in-ms = <100>;
-			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
-			ble-profile-index = <3>;
+			feedback-pattern = <150>;
 		};
 
 		evt_ble_5 {
-			label = "Bluetooth device";
+			label = "Bluetooth profile 5";
 			event-type = "ble-profile";
-			colors = [00 40 ff];
+			ble-profile-index = <4>;
+			colors = [80 00 FF];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			flash-ease-in-ms = <100>;
-			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
-			ble-profile-index = <4>;
+			feedback-pattern = <150>;
 		};
 
 		evt_no_ep {
@@ -233,7 +368,7 @@
 			flash-duration-ms = <350>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <50>;
+			feedback-pattern = <65>;
 		};
 
 		evt_bw1 {
@@ -245,7 +380,7 @@
 			flash-duration-ms = <1000>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <50>;
+			feedback-pattern = <100 100 100 100 100>;
 		};
 
 		evt_bw2 {
@@ -257,7 +392,7 @@
 			flash-duration-ms = <1500>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <50>;
+			feedback-pattern = <100 100 100 100 100>;
 		};
 
 		evt_bw3 {
@@ -269,7 +404,7 @@
 			flash-duration-ms = <2000>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <50>;
+			feedback-pattern = <100 100 100 100 100>;
 		};
 
 		evt_bc1 {
@@ -281,7 +416,7 @@
 			flash-duration-ms = <1000>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <125>;
+			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
 		};
 
 		evt_bc2 {
@@ -293,7 +428,7 @@
 			flash-duration-ms = <1500>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <125>;
+			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
 		};
 
 		evt_bc3 {
@@ -305,7 +440,7 @@
 			flash-duration-ms = <3000>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <125>;
+			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
 		};
 
 		os_switched {
@@ -338,7 +473,7 @@
 			custom-event-name = "key-auto-held";
 			colors = [00 00 00];
 			animation = "flash";
-			feedback-pattern = <40>;
+			feedback-pattern = <65>;
 		};
 
 		mui_conn {
@@ -369,14 +504,21 @@
 			label = "Switched to dongle";
 			event-type = "custom";
 			custom-event-name = "esb-switched";
-			colors = [FF 00 80];
-			animation = "flash";
-			flash-duration-ms = <450>;
-			flash-ease-in-ms = <125>;
-			flash-ease-out-ms = <125>;
-			feedback-pattern = <80>;
+			colors = [
+				FF 00 00
+				FF 80 00
+				FF FF 00
+				00 FF 00
+				00 FF FF
+				00 00 FF
+				80 00 FF
+			];
+			animation = "blink";
+			blink-on-ms = <142>;
+			blink-off-ms = <1>;
+			flash-duration-ms = <1000>;
+			feedback-pattern = <150 50 150 50 150>;
 		};
-
 		err_left_sensor {
 			label = "Sensor error (left)";
 			event-type = "error";

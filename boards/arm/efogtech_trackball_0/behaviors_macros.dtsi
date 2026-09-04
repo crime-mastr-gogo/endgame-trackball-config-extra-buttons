@@ -1,4 +1,5 @@
 #include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/pointing.h>
 #include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/adaptive_feedback.h>
@@ -219,6 +220,69 @@
 
 		z_so_off {
 			display-name = "Power off";
+		};
+				device_action_fb: device_action_feedback {
+			compatible = "zmk,behavior-device-action-feedback";
+			display-name = "Device Action Feedback";
+			#binding-cells = <1>;
+		};
+
+		clear_current_bt_fb: clear_current_bluetooth_with_feedback {
+			compatible = "zmk,behavior-macro";
+			display-name = "Clear Current Bluetooth Profile";
+			#binding-cells = <0>;
+			wait-ms = <600>;
+			bindings =
+				<&device_action_fb 0>,
+				<&bt BT_CLR>;
+		};
+
+		clear_all_bt_fb: clear_all_bluetooth_with_feedback {
+			compatible = "zmk,behavior-macro";
+			display-name = "Clear All Bluetooth Profiles";
+			#binding-cells = <0>;
+			wait-ms = <600>;
+			bindings =
+				<&device_action_fb 1>,
+				<&bt BT_CLR_ALL>;
+		};
+
+		power_off_fb: power_off_with_feedback {
+			compatible = "zmk,behavior-macro";
+			display-name = "Power Off with Feedback";
+			#binding-cells = <0>;
+			wait-ms = <700>;
+			bindings =
+				<&device_action_fb 2>,
+				<&soft_off>;
+		};
+
+		ptr_sens_up_fb: pointer_sensitivity_up_feedback {
+			compatible = "zmk,behavior-sensitivity-feedback";
+			display-name = "Pointer Sensitivity Up with Feedback";
+			#binding-cells = <0>;
+			increase;
+		};
+
+		ptr_sens_down_fb: pointer_sensitivity_down_feedback {
+			compatible = "zmk,behavior-sensitivity-feedback";
+			display-name = "Pointer Sensitivity Down with Feedback";
+			#binding-cells = <0>;
+		};
+
+		twist_sens_up_fb: twist_sensitivity_up_feedback {
+			compatible = "zmk,behavior-sensitivity-feedback";
+			display-name = "Twist Sensitivity Up with Feedback";
+			#binding-cells = <0>;
+			scroll;
+			increase;
+		};
+
+		twist_sens_down_fb: twist_sensitivity_down_feedback {
+			compatible = "zmk,behavior-sensitivity-feedback";
+			display-name = "Twist Sensitivity Down with Feedback";
+			#binding-cells = <0>;
+			scroll;
 		};
 
 				scroll_mode_toggle: scroll_mode_toggle {

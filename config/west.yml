@@ -4,6 +4,8 @@ manifest:
       url-base: https://github.com/zmkfirmware
     - name: efogdev
       url-base: https://github.com/efogdev
+    - name: crime-mastr-gogo
+      url-base: https://github.com/crime-mastr-gogo
   projects:
     - name: zmk
       remote: zmkfirmware
@@ -28,8 +30,8 @@ manifest:
       remote: efogdev
       revision: "71026fd"
     - name: zmk-adaptive-feedback
-      remote: efogdev
-      revision: "f7a1eff"
+      remote: crime-mastr-gogo
+      revision: "458f8f60ea76a78414dec90f92c144448790d79e"
     - name: zmk-behavior-follower
       remote: efogdev
       revision: "c27fe57"
