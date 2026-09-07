@@ -10,7 +10,8 @@
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
-#define SENSITIVITY_STEP 0.1f
+#define POINTER_SENSITIVITY_STEP 0.05f
+#define TWIST_SENSITIVITY_STEP 0.1f
 #define POINTER_MIN 0.1f
 #define POINTER_MAX 0.8f
 #define TWIST_MIN 0.1f
@@ -41,9 +42,10 @@ static bool value_is_lowest(float value, float minimum) {
 }
 
 static float calculate_new_value(float current, float minimum,
-                                 float maximum, bool increase) {
+                                 float maximum, float step,
+                                 bool increase) {
     float new_value =
-        current + (increase ? SENSITIVITY_STEP : -SENSITIVITY_STEP);
+        current + (increase ? step : -step);
 
     if (new_value > maximum + FLOAT_TOLERANCE) {
         return minimum;
@@ -93,8 +95,12 @@ static int on_sensitivity_feedback_pressed(
     const float maximum = config->scroll ? TWIST_MAX : POINTER_MAX;
     const float current =
         config->scroll ? p2sm_get_twist_coef() : p2sm_get_move_coef();
+    const float step =
+        config->scroll ? TWIST_SENSITIVITY_STEP
+                       : POINTER_SENSITIVITY_STEP;
     const float new_value =
-        calculate_new_value(current, minimum, maximum, config->increase);
+        calculate_new_value(current, minimum, maximum, step,
+                            config->increase);
 
     if (config->scroll) {
         p2sm_set_twist_coef(new_value);
