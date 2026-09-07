@@ -12,16 +12,37 @@
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
 static const float pointer_levels[] = {
-    0.10f, 0.12f, 0.14f, 0.16f, 0.18f,
-    0.20f, 0.23f, 0.26f, 0.29f, 0.35f,
-    0.40f, 0.50f, 0.60f, 0.70f, 0.80f,
+    /*
+     * Levels 1-10: 0.10 to 0.25
+     * Interval: approximately 0.016667
+     */
+    0.100000f, 0.116667f, 0.133333f, 0.150000f, 0.166667f,
+    0.183333f, 0.200000f, 0.216667f, 0.233333f, 0.250000f,
+
+    /*
+     * Levels 11-20: above 0.25 to 0.80
+     * Interval: 0.055
+     */
+    0.305000f, 0.360000f, 0.415000f, 0.470000f, 0.525000f,
+    0.580000f, 0.635000f, 0.690000f, 0.745000f, 0.800000f,
 };
 
 static const float twist_levels[] = {
-    0.10f, 0.13f, 0.16f, 0.20f, 0.23f,
-    0.26f, 0.30f, 0.35f, 0.40f, 0.50f,
-    0.60f, 0.70f, 0.80f, 0.90f, 1.00f,
+    /*
+     * Levels 1-10: 0.10 to 0.25
+     * Interval: approximately 0.016667
+     */
+    0.100000f, 0.116667f, 0.133333f, 0.150000f, 0.166667f,
+    0.183333f, 0.200000f, 0.216667f, 0.233333f, 0.250000f,
+
+    /*
+     * Levels 11-20: above 0.25 to 1.00
+     * Interval: 0.075
+     */
+    0.325000f, 0.400000f, 0.475000f, 0.550000f, 0.625000f,
+    0.700000f, 0.775000f, 0.850000f, 0.925000f, 1.000000f,
 };
+
 #define FLOAT_TOLERANCE 0.0001f
 
 ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_increased,
@@ -42,9 +63,17 @@ struct sensitivity_feedback_config {
     bool increase;
 };
 
-static bool value_is_lowest(float value, float minimum) {
-    return value >= minimum - FLOAT_TOLERANCE &&
-           value <= minimum + FLOAT_TOLERANCE;
+static bool value_is_endpoint(float value, float minimum,
+                              float maximum) {
+    const bool at_minimum =
+        value >= minimum - FLOAT_TOLERANCE &&
+        value <= minimum + FLOAT_TOLERANCE;
+
+    const bool at_maximum =
+        value >= maximum - FLOAT_TOLERANCE &&
+        value <= maximum + FLOAT_TOLERANCE;
+
+    return at_minimum || at_maximum;
 }
 
 static float calculate_new_value(float current, const float *levels,
@@ -56,7 +85,8 @@ static float calculate_new_value(float current, const float *levels,
             }
         }
 
-        return levels[0];
+        /* Already at or above maximum: remain at maximum. */
+        return levels[level_count - 1];
     }
 
     for (size_t i = level_count; i > 0; i--) {
@@ -65,7 +95,8 @@ static float calculate_new_value(float current, const float *levels,
         }
     }
 
-    return levels[level_count - 1];
+    /* Already at or below minimum: remain at minimum. */
+    return levels[0];
 }
 
 static void trigger_sensitivity_feedback(bool scroll, bool increase,
@@ -108,6 +139,7 @@ static int on_sensitivity_feedback_pressed(
             ? sizeof(twist_levels) / sizeof(twist_levels[0])
             : sizeof(pointer_levels) / sizeof(pointer_levels[0]);
     const float minimum = levels[0];
+    const float maximum = levels[level_count - 1];
     const float current =
         config->scroll ? p2sm_get_twist_coef() : p2sm_get_move_coef();
     const float new_value =
@@ -123,7 +155,7 @@ static int on_sensitivity_feedback_pressed(
     trigger_sensitivity_feedback(
         config->scroll,
         config->increase,
-        value_is_lowest(new_value, minimum));
+        value_is_endpoint(new_value, minimum, maximum));
 
     return ZMK_BEHAVIOR_OPAQUE;
 }
