@@ -284,6 +284,12 @@
 			#binding-cells = <0>;
 			scroll;
 		};
+                sens_reset_fb: sensitivity_reset_feedback {
+                        compatible = "zmk,behavior-sensitivity-feedback";
+                        display-name = "Reset Pointer and Twist Sensitivity";
+                        #binding-cells = <0>;
+                        reset;
+                };
 
 				scroll_mode_toggle: scroll_mode_toggle {
 			compatible = "zmk,behavior-scroll-mode-toggle";

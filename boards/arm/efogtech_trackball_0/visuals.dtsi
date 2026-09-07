@@ -228,6 +228,15 @@
 			flash-duration-ms = <1000>;
 			feedback-pattern = <150 50 150 50 150>;
 		};
+                sensitivity_reset {
+                        label = "Pointer and twist sensitivity reset";
+                        event-type = "custom";
+                        custom-event-name = "sensitivity-reset";
+                        colors = [00 FF FF];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                        feedback-pattern = <150 50 150>;
+                };
 
                 standard_scroll_selected {
                         label = "Standard scroll selected";

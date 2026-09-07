@@ -12,3 +12,7 @@ properties:
   increase:
     type: boolean
     description: Increase sensitivity instead of decreasing it
+
+  reset:
+    type: boolean
+    description: Reset pointer and twist-scroll sensitivity to their default values

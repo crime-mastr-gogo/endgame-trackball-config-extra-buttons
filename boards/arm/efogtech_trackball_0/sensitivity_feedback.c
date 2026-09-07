@@ -44,6 +44,7 @@ static const float twist_levels[] = {
 };
 
 #define FLOAT_TOLERANCE 0.0001f
+#define DEFAULT_SENSITIVITY 0.183333f
 
 ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_increased,
                         "pointer-sensitivity-increased");
@@ -57,10 +58,13 @@ ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_decreased,
                         "twist-sensitivity-decreased");
 ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_lowest,
                         "twist-sensitivity-lowest");
+ZAF_CUSTOM_EVENT_DEFINE(sensitivity_reset,
+                        "sensitivity-reset");
 
 struct sensitivity_feedback_config {
     bool scroll;
     bool increase;
+    bool reset;
 };
 
 static bool value_is_endpoint(float value, float minimum,
@@ -132,6 +136,13 @@ static int on_sensitivity_feedback_pressed(
         zmk_behavior_get_binding(binding->behavior_dev);
     const struct sensitivity_feedback_config *config = dev->config;
 
+    if (config->reset) {
+        p2sm_set_move_coef(DEFAULT_SENSITIVITY);
+        p2sm_set_twist_coef(DEFAULT_SENSITIVITY);
+        zaf_custom_event_trigger(&sensitivity_reset);
+        return ZMK_BEHAVIOR_OPAQUE;
+    }
+
     const float *levels =
         config->scroll ? twist_levels : pointer_levels;
     const size_t level_count =
@@ -174,6 +185,7 @@ static const struct behavior_driver_api sensitivity_feedback_driver_api = {
         sensitivity_feedback_config_##n = {                             \
             .scroll = DT_INST_PROP_OR(n, scroll, false),                \
             .increase = DT_INST_PROP_OR(n, increase, false),            \
+            .reset = DT_INST_PROP_OR(n, reset, false),                  \
         };                                                              \
     BEHAVIOR_DT_INST_DEFINE(                                            \
         n, sensitivity_feedback_init, NULL, NULL,                       \

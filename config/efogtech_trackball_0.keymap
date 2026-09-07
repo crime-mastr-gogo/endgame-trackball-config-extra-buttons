@@ -76,9 +76,9 @@
 				&studio_unlock              &power_off_fb
 				&scroll_mode_toggle         &clear_all_bt_fb
 
-				// IO1, IO2 and IO3
-				&clear_current_bt_fb        &trans
-				&trans
+			        // IO1, IO2 and IO3
+                                &clear_current_bt_fb        &sens_reset_fb
+                                &trans
 			>;
 		};
 
