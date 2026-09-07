@@ -57,7 +57,7 @@
 		type = <INPUT_EV_REL>;
 		codes = <INPUT_REL_WHEEL INPUT_REL_HWHEEL>;
 		track-remainders;
-		default-coef = <ZBS_SCALE(1, 10)>;
+		default-coef = <ZBS_SCALE(1, 40)>;
 		default-coef-slot1 = <ZBS_SCALE(1, 40)>;
 		slot0 = <ZBS_RUNTIME>;
 		slot1 = <ZBS_RUNTIME>;
