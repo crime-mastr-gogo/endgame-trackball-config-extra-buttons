@@ -34,10 +34,10 @@
 				 * Internal order:
 				 * Left A, Left B, Right A, Right B, IO1, IO2, IO3
 				 *
-				 * Studio displays Left B before Left A because only
-				 * their visual coordinates were interchanged.
+				 * Studio and internal order both use Left A
+				 * before Left B.
 				 */
-				&drag_lock                      &mo LAYER_EXTRAS
+				&mo LAYER_EXTRAS             &drag_lock
 				&trans                      &trans
 				&trans                      &trans
 				&mo LAYER_DEVICE
@@ -54,7 +54,7 @@
 				&trans                      &trans
 
 								// Left A, Left B, Right A, Right B
-				&twist_sens_up_fb           &trans
+				&trans                      &twist_sens_up_fb
 				&twist_sens_down_fb         &bt BT_NXT
 
 				// IO1, IO2 and IO3
@@ -73,7 +73,7 @@
 				&trans                      &trans
 
 				// Left A, Left B, Right A, Right B
-				&studio_unlock              &power_off_fb
+				&power_off_fb               &studio_unlock
 				&scroll_mode_toggle         &clear_all_bt_fb
 
 			        // IO1, IO2 and IO3

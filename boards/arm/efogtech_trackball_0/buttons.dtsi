@@ -159,8 +159,8 @@
          * Seven-button bottom row, from left to right:
          * Left A, Left B, Right A, Right B, IO1, IO2, IO3
          */
-        , <&key_physical_attrs 120   180   365   900   0    8    8>
         , <&key_physical_attrs 120   180   225   900   0    8    8>
+        , <&key_physical_attrs 120   180   365   900   0    8    8>
         , <&key_physical_attrs 120   180   505   900   0    8    8>
         , <&key_physical_attrs 120   180   645   900   0    8    8>
         , <&key_physical_attrs 120   180   785   900   0    8    8>

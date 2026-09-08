@@ -44,7 +44,8 @@ static const float twist_levels[] = {
 };
 
 #define FLOAT_TOLERANCE 0.0001f
-#define DEFAULT_SENSITIVITY 0.183333f
+#define DEFAULT_POINTER_SENSITIVITY 0.200000f
+#define DEFAULT_TWIST_SENSITIVITY 0.166667f
 
 ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_increased,
                         "pointer-sensitivity-increased");
@@ -137,8 +138,8 @@ static int on_sensitivity_feedback_pressed(
     const struct sensitivity_feedback_config *config = dev->config;
 
     if (config->reset) {
-        p2sm_set_move_coef(DEFAULT_SENSITIVITY);
-        p2sm_set_twist_coef(DEFAULT_SENSITIVITY);
+        p2sm_set_move_coef(DEFAULT_POINTER_SENSITIVITY);
+        p2sm_set_twist_coef(DEFAULT_TWIST_SENSITIVITY);
         zaf_custom_event_trigger(&sensitivity_reset);
         return ZMK_BEHAVIOR_OPAQUE;
     }
