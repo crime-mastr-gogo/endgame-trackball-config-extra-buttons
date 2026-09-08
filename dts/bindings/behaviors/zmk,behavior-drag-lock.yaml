@@ -1,0 +1,5 @@
+description: Toggle and retain the left mouse button state
+
+compatible: "zmk,behavior-drag-lock"
+
+include: zero_param.yaml

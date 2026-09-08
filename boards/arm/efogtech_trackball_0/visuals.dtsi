@@ -238,6 +238,26 @@
                         feedback-pattern = <150 50 150>;
                 };
 
+                drag_lock_enabled {
+                        label = "Drag Lock enabled";
+                        event-type = "custom";
+                        custom-event-name = "drag-lock-enabled";
+                        colors = [FF 00 FF];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                        feedback-pattern = <150 50 150>;
+                };
+
+                drag_lock_disabled {
+                        label = "Drag Lock disabled";
+                        event-type = "custom";
+                        custom-event-name = "drag-lock-disabled";
+                        colors = [00 FF FF];
+                        animation = "flash";
+                        flash-duration-ms = <250>;
+                        feedback-pattern = <100>;
+                };
+
                 standard_scroll_selected {
                         label = "Standard scroll selected";
                         event-type = "custom";

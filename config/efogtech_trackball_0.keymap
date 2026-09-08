@@ -37,7 +37,7 @@
 				 * Studio displays Left B before Left A because only
 				 * their visual coordinates were interchanged.
 				 */
-				&trans                      &mo LAYER_EXTRAS
+				&drag_lock                      &mo LAYER_EXTRAS
 				&trans                      &trans
 				&trans                      &trans
 				&mo LAYER_DEVICE

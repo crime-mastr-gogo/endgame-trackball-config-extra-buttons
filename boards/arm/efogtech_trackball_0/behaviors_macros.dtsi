@@ -291,6 +291,12 @@
                         reset;
                 };
 
+                drag_lock: drag_lock {
+                        compatible = "zmk,behavior-drag-lock";
+                        display-name = "Drag Lock";
+                        #binding-cells = <0>;
+                };
+
 				scroll_mode_toggle: scroll_mode_toggle {
 			compatible = "zmk,behavior-scroll-mode-toggle";
 			display-name = "Toggle Standard/High-Res Scroll";
