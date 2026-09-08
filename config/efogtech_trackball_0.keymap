@@ -45,7 +45,7 @@
 		};
 
 		layer1 {
-			display-name = "Extras";
+			display-name = "Control Settings";
 			bindings = <
 				// Original eight buttons
 				&trans                      &trans
@@ -64,7 +64,7 @@
 		};
 
 		layer2 {
-			display-name = "Device";
+			display-name = "Device Settings";
 			bindings = <
 				// Original eight buttons
 				&trans                      &trans
@@ -83,7 +83,7 @@
 		};
 
 		layer3 {
-			display-name = "Scroll";
+			display-name = "Drag Scroll";
 			bindings = <
 				// Original eight buttons
 				&trans    &trans
@@ -102,7 +102,7 @@
 		};
 
 		layer4 {
-			display-name = "Snipe";
+			display-name = "Fine Cursor Movement";
 			bindings = <
 				// Original eight buttons
 				&trans    &trans
@@ -121,7 +121,7 @@
 		};
 
 		layer5 {
-			display-name = "User";
+			display-name = "Extra Layer";
 			bindings = <
 				// Original eight buttons
 				&trans    &trans
@@ -140,7 +140,7 @@
 		};
 
 		layer6 {
-			display-name = "Standard Scroll";
+			display-name = "Scroll Mode Switch";
 			bindings = <
 				// Original eight buttons
 				&trans    &trans
