@@ -18,6 +18,35 @@
 #endif
 
 / {
+macros {
+    type_right_encoder_b: type_right_encoder_b {
+        compatible = "zmk,behavior-macro";
+        #binding-cells = <0>;
+
+        wait-ms = <30>;
+        tap-ms = <20>;
+
+        bindings =
+            <&kp FSLH>,
+            <&kp SEMI>,
+            <&kp DOT>,
+            <&kp L>,
+            <&kp COMMA>,
+            <&kp K>,
+            <&kp M>,
+            <&kp J>,
+            <&kp LS(FSLH)>,
+            <&kp LS(SEMI)>,
+            <&kp LS(DOT)>,
+            <&kp LS(L)>,
+            <&kp LS(COMMA)>,
+            <&kp LS(K)>,
+            <&kp LS(M)>,
+            <&kp LS(J)>,
+            <&kp ENTER>;
+    };
+};
+
 	keymap {
 		compatible = "zmk,keymap";
 
@@ -38,7 +67,7 @@
 				 * before Left B.
 				 */
 				&mo LAYER_EXTRAS             &drag_lock
-				&trans                      &trans
+				&trans                      &type_right_encoder_b
 				&trans                      &trans
 				&mo LAYER_DEVICE
 			>;
