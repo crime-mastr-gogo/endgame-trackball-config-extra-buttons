@@ -49,7 +49,7 @@
                         colors = [00 40 40];
                         animation = "flash";
                         flash-duration-ms = <500>;
-                        feedback-pattern = <150>;
+                        feedback-pattern = <80>;
                         persistent;
                 };
 
@@ -60,7 +60,7 @@
                         colors = [40 20 00];
                         animation = "flash";
                         flash-duration-ms = <500>;
-                        feedback-pattern = <150 50 150>;
+                        feedback-pattern = <80 70 80>;
                         persistent;
                 };
 
@@ -122,7 +122,7 @@
 			blink-on-ms = <120>;
 			blink-off-ms = <80>;
 			flash-duration-ms = <600>;
-			feedback-pattern = <150 50 150 50 150>;
+			feedback-pattern = <300 120 70>;
 		};
 
 		clear_all_bt_feedback {
@@ -134,7 +134,7 @@
 			blink-on-ms = <120>;
 			blink-off-ms = <80>;
 			flash-duration-ms = <600>;
-			feedback-pattern = <250 50 250 50 250>;
+			feedback-pattern = <300 100 300 100 300>;
 		};
 
 		power_off_feedback {
@@ -146,7 +146,7 @@
 			flash-duration-ms = <700>;
 			flash-ease-out-ms = <700>;
 			flash-ease-out-fn = "quad-out";
-			feedback-pattern = <250>;
+			feedback-pattern = <500>;
 		};
 
 		pointer_sensitivity_increased {
@@ -156,7 +156,7 @@
 			colors = [00 FF 00];
 			animation = "flash";
 			flash-duration-ms = <250>;
-			feedback-pattern = <100>;
+			feedback-pattern = <70 70 220>;
 		};
 
 		pointer_sensitivity_decreased {
@@ -166,7 +166,7 @@
 			colors = [FF 80 00];
 			animation = "flash";
 			flash-duration-ms = <250>;
-			feedback-pattern = <100>;
+			feedback-pattern = <220 70 70>;
 		};
 
                 pointer_sensitivity_lowest {
@@ -186,7 +186,7 @@
                         blink-on-ms = <142>;
                         blink-off-ms = <1>;
                         flash-duration-ms = <1000>;
-                        feedback-pattern = <150 50 150 50 150>;
+                        feedback-pattern = <220 70 70 70 220>;
                 };
 
 		twist_sensitivity_increased {
@@ -196,7 +196,7 @@
 			colors = [00 00 FF];
 			animation = "flash";
 			flash-duration-ms = <250>;
-			feedback-pattern = <100>;
+			feedback-pattern = <70 70 70 70 220>;
 		};
 
 		twist_sensitivity_decreased {
@@ -206,7 +206,7 @@
 			colors = [FF FF 00];
 			animation = "flash";
 			flash-duration-ms = <250>;
-			feedback-pattern = <100>;
+			feedback-pattern = <220 70 70 70 70>;
 		};
 
 		twist_sensitivity_lowest {
@@ -226,7 +226,7 @@
 			blink-on-ms = <142>;
 			blink-off-ms = <1>;
 			flash-duration-ms = <1000>;
-			feedback-pattern = <150 50 150 50 150>;
+			feedback-pattern = <220 70 70 70 70 70 220>;
 		};
                 sensitivity_reset {
                         label = "Pointer and twist sensitivity reset";
@@ -235,7 +235,7 @@
                         colors = [00 FF FF];
                         animation = "flash";
                         flash-duration-ms = <500>;
-                        feedback-pattern = <150 50 150>;
+                        feedback-pattern = <70 70 70 70 70 180 300>;
                 };
 
                 drag_lock_enabled {
@@ -245,7 +245,7 @@
                         colors = [FF 00 FF];
                         animation = "flash";
                         flash-duration-ms = <500>;
-                        feedback-pattern = <150 50 150>;
+                        feedback-pattern = <70 70 220>;
                 };
 
                 drag_lock_disabled {
@@ -255,7 +255,7 @@
                         colors = [00 FF FF];
                         animation = "flash";
                         flash-duration-ms = <250>;
-                        feedback-pattern = <100>;
+                        feedback-pattern = <220 70 70>;
                 };
 
                 standard_scroll_selected {
@@ -267,7 +267,7 @@
                         blink-on-ms = <150>;
                         blink-off-ms = <50>;
                         flash-duration-ms = <600>;
-                        feedback-pattern = <150 50 150 50 150>;
+                        feedback-pattern = <220 70 220 70 70>;
                 };
 
 		high_res_scroll_selected {
@@ -279,7 +279,7 @@
 			blink-on-ms = <150>;
 			blink-off-ms = <50>;
 			flash-duration-ms = <600>;
-			feedback-pattern = <150 50 150 50 150>;
+			feedback-pattern = <70 70 220 70 220>;
 		};
 
 		idle {
@@ -304,7 +304,7 @@
 			colors = [00 FF 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <60 60 60 60 60>;
 		};
 
 		evt_usb_conn {
@@ -313,7 +313,7 @@
 			colors = [00 ff 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <40 50 100>;
 		};
 
 		evt_usb_disconn {
@@ -324,7 +324,7 @@
 			flash-duration-ms = <350>;
 			flash-ease-in-ms = <150>;
 			flash-ease-out-ms = <150>;
-			feedback-pattern = <150>;
+			feedback-pattern = <100 50 40>;
 		};
 
 		mui_adv {
@@ -336,7 +336,7 @@
 			flash-duration-ms = <1000>;
 			flash-ease-in-ms = <150>;
 			flash-ease-out-ms = <150>;
-			feedback-pattern = <65>;
+			feedback-pattern = <35 100 35>;
 		};
 
 		evt_ble_1 {
@@ -346,7 +346,7 @@
 			colors = [00 00 FF];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <220 180 60>;
 		};
 
 		evt_ble_2 {
@@ -356,7 +356,7 @@
 			colors = [00 FF 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <220 180 60 60 60>;
 		};
 
 		evt_ble_3 {
@@ -366,7 +366,7 @@
 			colors = [FF FF 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <220 180 60 60 60 60 60>;
 		};
 
 		evt_ble_4 {
@@ -376,7 +376,7 @@
 			colors = [FF 00 00];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <220 180 60 60 60 60 60 60 60>;
 		};
 
 		evt_ble_5 {
@@ -386,7 +386,7 @@
 			colors = [80 00 FF];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <150>;
+			feedback-pattern = <220 180 60 60 60 60 60 60 60 60 60>;
 		};
 
 		evt_no_ep {
@@ -397,7 +397,7 @@
 			flash-duration-ms = <350>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <65>;
+			feedback-pattern = <500 150 500>;
 		};
 
 		evt_bw1 {
@@ -409,7 +409,7 @@
 			flash-duration-ms = <1000>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <100 100 100 100 100>;
+			feedback-pattern = <100 100 100>;
 		};
 
 		evt_bw2 {
@@ -421,7 +421,7 @@
 			flash-duration-ms = <1500>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <100 100 100 100 100>;
+			feedback-pattern = <100 80 100 80 100>;
 		};
 
 		evt_bw3 {
@@ -433,7 +433,7 @@
 			flash-duration-ms = <2000>;
 			flash-ease-in-ms = <100>;
 			flash-ease-out-ms = <100>;
-			feedback-pattern = <100 100 100 100 100>;
+			feedback-pattern = <180 100 180 100 180>;
 		};
 
 		evt_bc1 {
@@ -445,7 +445,7 @@
 			flash-duration-ms = <1000>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
+			feedback-pattern = <300 120 300>;
 		};
 
 		evt_bc2 {
@@ -457,7 +457,7 @@
 			flash-duration-ms = <1500>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
+			feedback-pattern = <300 100 300 100 300>;
 		};
 
 		evt_bc3 {
@@ -469,7 +469,7 @@
 			flash-duration-ms = <3000>;
 			flash-ease-in-ms = <50>;
 			flash-ease-out-ms = <50>;
-			feedback-pattern = <250 100 250 100 250 100 250 100 250>;
+			feedback-pattern = <400 100 400 100 400>;
 		};
 
 		os_switched {
@@ -481,7 +481,7 @@
 			flash-duration-ms = <250>;
 			flash-ease-in-ms = <75>;
 			flash-ease-out-ms = <75>;
-			feedback-pattern = <65>;
+			feedback-pattern = <40 40 40 40 120>;
 		};
 
 		keymap_switched {
@@ -493,7 +493,7 @@
 			flash-duration-ms = <250>;
 			flash-ease-in-ms = <75>;
 			flash-ease-out-ms = <75>;
-			feedback-pattern = <65>;
+			feedback-pattern = <120 40 40 40 40>;
 		};
 
 		key_auto_held {
@@ -502,7 +502,7 @@
 			custom-event-name = "key-auto-held";
 			colors = [00 00 00];
 			animation = "flash";
-			feedback-pattern = <65>;
+			feedback-pattern = <35>;
 		};
 
 		mui_conn {
@@ -546,7 +546,7 @@
 			blink-on-ms = <142>;
 			blink-off-ms = <1>;
 			flash-duration-ms = <1000>;
-			feedback-pattern = <150 50 150 50 150>;
+			feedback-pattern = <220 100 220>;
 		};
 		err_left_sensor {
 			label = "Sensor error (left)";
@@ -556,7 +556,7 @@
 			animation = "blink";
 			blink-on-ms = <750>;
 			blink-off-ms = <750>;
-			feedback-pattern = <250>;
+			feedback-pattern = <350 100 350 180 70>;
 		};
 
 		err_right_sensor {
@@ -567,7 +567,7 @@
 			animation = "blink";
 			blink-on-ms = <750>;
 			blink-off-ms = <750>;
-			feedback-pattern = <250>;
+			feedback-pattern = <350 100 350 180 70 70 70>;
 		};
 	};
 };
