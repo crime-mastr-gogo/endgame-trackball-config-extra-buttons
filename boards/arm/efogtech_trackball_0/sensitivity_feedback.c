@@ -1,9 +1,13 @@
 #define DT_DRV_COMPAT zmk_behavior_sensitivity_feedback
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <zephyr/device.h>
+#include <zephyr/kernel.h>
+#include <zephyr/settings/settings.h>
 
 #include <drivers/behavior.h>
 #include <drivers/p2sm_runtime.h>
@@ -46,6 +50,14 @@ static const float twist_levels[] = {
 #define FLOAT_TOLERANCE 0.0001f
 #define DEFAULT_POINTER_SENSITIVITY 0.200000f
 #define DEFAULT_TWIST_SENSITIVITY 0.166667f
+#define SETTINGS_SAVE_DELAY_MS 2500
+
+/*
+ * These begin with the compiled defaults. If Settings finds saved values
+ * during startup, it replaces them before applying the sensitivities.
+ */
+static float saved_pointer_sensitivity = DEFAULT_POINTER_SENSITIVITY;
+static float saved_twist_sensitivity = DEFAULT_TWIST_SENSITIVITY;
 
 ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_increased,
                         "pointer-sensitivity-increased");
@@ -67,6 +79,122 @@ struct sensitivity_feedback_config {
     bool increase;
     bool reset;
 };
+
+static bool value_matches_level(float value, const float *levels,
+                                size_t level_count) {
+    for (size_t i = 0; i < level_count; i++) {
+        if (value >= levels[i] - FLOAT_TOLERANCE &&
+            value <= levels[i] + FLOAT_TOLERANCE) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static void sensitivity_save_work_handler(struct k_work *work) {
+    ARG_UNUSED(work);
+
+    settings_save_one("endgame/sensitivity/pointer",
+                      &saved_pointer_sensitivity,
+                      sizeof(saved_pointer_sensitivity));
+
+    settings_save_one("endgame/sensitivity/twist",
+                      &saved_twist_sensitivity,
+                      sizeof(saved_twist_sensitivity));
+}
+
+K_WORK_DELAYABLE_DEFINE(sensitivity_save_work,
+                        sensitivity_save_work_handler);
+
+static void schedule_sensitivity_save(void) {
+    /*
+     * Rescheduling means several quick button presses produce one flash
+     * write after the user stops changing the sensitivity.
+     */
+    k_work_reschedule(&sensitivity_save_work,
+                      K_MSEC(SETTINGS_SAVE_DELAY_MS));
+}
+
+static int sensitivity_settings_set(
+    const char *name,
+    size_t len,
+    settings_read_cb read_cb,
+    void *cb_arg) {
+
+    float value;
+    ssize_t read_len;
+
+    if (settings_name_steq(name, "pointer", NULL)) {
+        if (len != sizeof(value)) {
+            return -EINVAL;
+        }
+
+        read_len = read_cb(cb_arg, &value, sizeof(value));
+
+        if (read_len < 0) {
+            return (int)read_len;
+        }
+
+        if (read_len != sizeof(value)) {
+            return -EINVAL;
+        }
+
+        if (value_matches_level(
+                value,
+                pointer_levels,
+                sizeof(pointer_levels) / sizeof(pointer_levels[0]))) {
+            saved_pointer_sensitivity = value;
+        }
+
+        return 0;
+    }
+
+    if (settings_name_steq(name, "twist", NULL)) {
+        if (len != sizeof(value)) {
+            return -EINVAL;
+        }
+
+        read_len = read_cb(cb_arg, &value, sizeof(value));
+
+        if (read_len < 0) {
+            return (int)read_len;
+        }
+
+        if (read_len != sizeof(value)) {
+            return -EINVAL;
+        }
+
+        if (value_matches_level(
+                value,
+                twist_levels,
+                sizeof(twist_levels) / sizeof(twist_levels[0]))) {
+            saved_twist_sensitivity = value;
+        }
+
+        return 0;
+    }
+
+    return -ENOENT;
+}
+
+static int sensitivity_settings_commit(void) {
+    /*
+     * Saved values are used when available. Otherwise these variables
+     * still contain their compiled defaults.
+     */
+    p2sm_set_move_coef(saved_pointer_sensitivity);
+    p2sm_set_twist_coef(saved_twist_sensitivity);
+    return 0;
+}
+
+SETTINGS_STATIC_HANDLER_DEFINE(
+    endgame_sensitivity,
+    "endgame/sensitivity",
+    NULL,
+    sensitivity_settings_set,
+    sensitivity_settings_commit,
+    NULL);
 
 static bool value_is_endpoint(float value, float minimum,
                               float maximum) {
@@ -90,7 +218,6 @@ static float calculate_new_value(float current, const float *levels,
             }
         }
 
-        /* Already at or above maximum: remain at maximum. */
         return levels[level_count - 1];
     }
 
@@ -100,14 +227,13 @@ static float calculate_new_value(float current, const float *levels,
         }
     }
 
-    /* Already at or below minimum: remain at minimum. */
     return levels[0];
 }
 
 static void trigger_sensitivity_feedback(bool scroll, bool increase,
-                                         bool lowest) {
+                                         bool endpoint) {
     if (scroll) {
-        if (lowest) {
+        if (endpoint) {
             zaf_custom_event_trigger(&twist_sensitivity_lowest);
         } else if (increase) {
             zaf_custom_event_trigger(&twist_sensitivity_increased);
@@ -118,7 +244,7 @@ static void trigger_sensitivity_feedback(bool scroll, bool increase,
         return;
     }
 
-    if (lowest) {
+    if (endpoint) {
         zaf_custom_event_trigger(&pointer_sensitivity_lowest);
     } else if (increase) {
         zaf_custom_event_trigger(&pointer_sensitivity_increased);
@@ -138,31 +264,46 @@ static int on_sensitivity_feedback_pressed(
     const struct sensitivity_feedback_config *config = dev->config;
 
     if (config->reset) {
-        p2sm_set_move_coef(DEFAULT_POINTER_SENSITIVITY);
-        p2sm_set_twist_coef(DEFAULT_TWIST_SENSITIVITY);
+        saved_pointer_sensitivity = DEFAULT_POINTER_SENSITIVITY;
+        saved_twist_sensitivity = DEFAULT_TWIST_SENSITIVITY;
+
+        p2sm_set_move_coef(saved_pointer_sensitivity);
+        p2sm_set_twist_coef(saved_twist_sensitivity);
+
+        schedule_sensitivity_save();
         zaf_custom_event_trigger(&sensitivity_reset);
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
     const float *levels =
         config->scroll ? twist_levels : pointer_levels;
+
     const size_t level_count =
         config->scroll
             ? sizeof(twist_levels) / sizeof(twist_levels[0])
             : sizeof(pointer_levels) / sizeof(pointer_levels[0]);
+
     const float minimum = levels[0];
     const float maximum = levels[level_count - 1];
+
     const float current =
-        config->scroll ? p2sm_get_twist_coef() : p2sm_get_move_coef();
+        config->scroll
+            ? p2sm_get_twist_coef()
+            : p2sm_get_move_coef();
+
     const float new_value =
         calculate_new_value(current, levels, level_count,
                             config->increase);
 
     if (config->scroll) {
+        saved_twist_sensitivity = new_value;
         p2sm_set_twist_coef(new_value);
     } else {
+        saved_pointer_sensitivity = new_value;
         p2sm_set_move_coef(new_value);
     }
+
+    schedule_sensitivity_save();
 
     trigger_sensitivity_feedback(
         config->scroll,
