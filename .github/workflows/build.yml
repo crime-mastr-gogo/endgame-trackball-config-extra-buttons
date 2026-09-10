@@ -139,7 +139,7 @@ jobs:
   v4-release:
     name: Publish tested v4.0.0 assets
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/final-15-button-firmware'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/final-15-button-firmware'
     permissions:
       contents: write
     steps:
