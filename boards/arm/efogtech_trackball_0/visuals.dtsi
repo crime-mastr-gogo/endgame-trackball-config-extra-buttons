@@ -4,11 +4,11 @@
 #define LAYER_DEFAULT      0
 #define LAYER_EXTRAS       1
 #define LAYER_DEVICE       2
-#define LAYER_SCROLL       3
-#define LAYER_SNIPE        4
-#define LAYER_FEEDBACK     5
+#define LAYER_STATUS       3
+#define LAYER_FEEDBACK     4
+#define LAYER_SCROLL       5
 #define LAYER_STANDARD_SCROLL 6
-#define LAYER_STATUS       7
+#define LAYER_SNIPE        7
 #endif
 
 / {

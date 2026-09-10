@@ -11,11 +11,11 @@
 #define LAYER_DEFAULT      0
 #define LAYER_EXTRAS       1
 #define LAYER_DEVICE       2
-#define LAYER_SCROLL       3
-#define LAYER_SNIPE        4
-#define LAYER_FEEDBACK     5
+#define LAYER_STATUS       3
+#define LAYER_FEEDBACK     4
+#define LAYER_SCROLL       5
 #define LAYER_STANDARD_SCROLL 6
-#define LAYER_STATUS       7
+#define LAYER_SNIPE        7
 #endif
 
 / {
@@ -113,6 +113,41 @@ macros {
 		};
 
 		layer3 {
+			display-name = "Status Report";
+			bindings = <
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A: twist; Left B: Bluetooth
+				&report_twist_status 0    &report_bluetooth_status 1
+				// Right A: pointer; Right B: scroll mode
+				&report_pointer_status 2    &report_scroll_status 3
+
+				&trans    &trans
+				&trans
+			>;
+		};
+
+		layer4 {
+			display-name = "Feedback Controls";
+			bindings = <
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A: vibration toggle; Left B: LED toggle
+				&toggle_vibration 4    &toggle_led 5
+				&trans                &trans
+
+				&trans    &trans
+				&trans
+			>;
+		};
+
+		layer5 {
 			display-name = "Drag Scroll";
 			bindings = <
 				// Original eight buttons
@@ -126,42 +161,6 @@ macros {
 				&trans    &trans
 
 				// IO1, IO2 and IO3
-				&trans    &trans
-				&trans
-			>;
-		};
-
-		layer4 {
-			display-name = "Fine Cursor Movement";
-			bindings = <
-				// Original eight buttons
-				&trans    &trans
-				&trans    &trans
-				&trans    &trans
-				&trans    &trans
-
-				// Left A, Left B, Right A, Right B
-				&trans    &trans
-				&trans    &trans
-
-				// IO1, IO2 and IO3
-				&trans    &trans
-				&trans
-			>;
-		};
-
-		layer5 {
-			display-name = "Feedback Controls";
-			bindings = <
-				&trans    &trans
-				&trans    &trans
-				&trans    &trans
-				&trans    &trans
-
-				// Left A: vibration toggle; Left B: LED toggle
-				&endgame_control 4    &endgame_control 5
-				&trans                &trans
-
 				&trans    &trans
 				&trans
 			>;
@@ -187,18 +186,19 @@ macros {
 		};
 
 		layer7 {
-			display-name = "Status Report";
+			display-name = "Fine Cursor Movement";
 			bindings = <
+				// Original eight buttons
 				&trans    &trans
 				&trans    &trans
 				&trans    &trans
 				&trans    &trans
 
-				// Left A: twist; Left B: Bluetooth
-				&endgame_control 0    &endgame_control 1
-				// Right A: pointer; Right B: scroll mode
-				&endgame_control 2    &endgame_control 3
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
 
+				// IO1, IO2 and IO3
 				&trans    &trans
 				&trans
 			>;

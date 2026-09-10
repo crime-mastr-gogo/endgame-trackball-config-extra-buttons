@@ -291,9 +291,39 @@
                         reset;
                 };
 
-                endgame_control: endgame_control {
+                report_twist_status: report_twist_status {
                         compatible = "zmk,behavior-endgame-control";
-                        display-name = "Endgame Status and Feedback Control";
+                        display-name = "Report Twist Sensitivity Level";
+                        #binding-cells = <1>;
+                };
+
+                report_bluetooth_status: report_bluetooth_status {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Report Current Bluetooth Profile";
+                        #binding-cells = <1>;
+                };
+
+                report_pointer_status: report_pointer_status {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Report Pointer Sensitivity Level";
+                        #binding-cells = <1>;
+                };
+
+                report_scroll_status: report_scroll_status {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Report Current Scroll Mode";
+                        #binding-cells = <1>;
+                };
+
+                toggle_vibration: toggle_vibration {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Toggle Vibration On or Off";
+                        #binding-cells = <1>;
+                };
+
+                toggle_led: toggle_led {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Toggle LED Feedback On or Off";
                         #binding-cells = <1>;
                 };
 
