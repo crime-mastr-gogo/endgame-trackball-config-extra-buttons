@@ -15,6 +15,8 @@
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
+extern void endgame_cancel_status_feedback(void);
+
 static const float pointer_levels[] = {
     /*
      * Levels 1-10: 0.10 to 0.25
@@ -296,6 +298,7 @@ static int on_sensitivity_feedback_pressed(
     struct zmk_behavior_binding_event event) {
 
     ARG_UNUSED(event);
+    endgame_cancel_status_feedback();
 
     const struct device *dev =
         zmk_behavior_get_binding(binding->behavior_dev);

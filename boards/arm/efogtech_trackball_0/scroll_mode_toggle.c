@@ -14,6 +14,8 @@
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
+extern void endgame_cancel_status_feedback(void);
+
 #define STANDARD_SCROLL_LAYER 6
 #define FEEDBACK_DELAY_MS 30
 #define RESTORE_DELAY_MS 250
@@ -143,6 +145,8 @@ static int on_scroll_mode_toggle_pressed(
 
     ARG_UNUSED(binding);
     ARG_UNUSED(event);
+
+    endgame_cancel_status_feedback();
 
     if (zmk_keymap_layer_active(STANDARD_SCROLL_LAYER)) {
         int rc = zmk_keymap_layer_deactivate(STANDARD_SCROLL_LAYER);

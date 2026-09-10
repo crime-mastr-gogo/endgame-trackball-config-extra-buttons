@@ -8,6 +8,8 @@
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
+extern void endgame_cancel_status_feedback(void);
+
 #define DEVICE_ACTION_CLEAR_CURRENT_BT 0
 #define DEVICE_ACTION_CLEAR_ALL_BT 1
 #define DEVICE_ACTION_POWER_OFF 2
@@ -24,6 +26,7 @@ static int on_device_action_feedback_pressed(
     struct zmk_behavior_binding_event event) {
 
     ARG_UNUSED(event);
+    endgame_cancel_status_feedback();
 
     switch (binding->param1) {
     case DEVICE_ACTION_CLEAR_CURRENT_BT:

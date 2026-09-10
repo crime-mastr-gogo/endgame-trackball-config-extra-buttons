@@ -125,7 +125,8 @@ macros {
 				// Right A: pointer; Right B: scroll mode
 				&report_pointer_status 2    &report_scroll_status 3
 
-				&trans    &trans
+				// IO1: battery charge; IO2 and IO3 inherit their holds
+				&report_battery_status 6    &trans
 				&trans
 			>;
 		};

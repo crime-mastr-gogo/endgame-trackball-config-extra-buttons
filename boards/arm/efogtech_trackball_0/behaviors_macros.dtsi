@@ -315,6 +315,12 @@
                         #binding-cells = <1>;
                 };
 
+                report_battery_status: report_battery_status {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Report Battery Charge";
+                        #binding-cells = <1>;
+                };
+
                 toggle_vibration: toggle_vibration {
                         compatible = "zmk,behavior-endgame-control";
                         display-name = "Toggle Vibration On or Off";

@@ -11,6 +11,8 @@
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
 
+extern void endgame_cancel_status_feedback(void);
+
 ZAF_CUSTOM_EVENT_DEFINE(drag_lock_enabled,
                         "drag-lock-enabled");
 ZAF_CUSTOM_EVENT_DEFINE(drag_lock_disabled,
@@ -25,6 +27,7 @@ static int on_drag_lock_pressed(
     struct zmk_behavior_binding_event event) {
 
     ARG_UNUSED(event);
+    endgame_cancel_status_feedback();
 
     const struct device *dev =
         zmk_behavior_get_binding(binding->behavior_dev);

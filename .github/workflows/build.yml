@@ -83,6 +83,15 @@ jobs:
             mv "$file" "${{ needs.meta.outputs.release_version }}.uf2"
             break
           done
+      - name: Generate release verification files
+        run: |
+          set -euo pipefail
+          sha256sum ./*.uf2 > SHA256SUMS.txt
+          {
+            echo "version=${{ needs.meta.outputs.release_version }}"
+            echo "source_commit=${{ github.sha }}"
+            echo "workflow_run=${{ github.run_id }}"
+          } > BUILD-INFO.txt
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
@@ -90,6 +99,8 @@ jobs:
           name: "${{ needs.meta.outputs.release_name }}"
           files: |
             ./*.uf2
+            ./SHA256SUMS.txt
+            ./BUILD-INFO.txt
           draft: false
           prerelease: false
 
@@ -113,9 +124,14 @@ jobs:
             mv "$file" "${{ needs.meta.outputs.paw3395_version }}.uf2"
             break
           done
+      - name: Generate paw3395 checksum
+        run: |
+          set -euo pipefail
+          sha256sum ./*.uf2 > "${{ needs.meta.outputs.paw3395_version }}.sha256"
       - name: Upload paw3395 firmware to existing release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.meta.outputs.paw3395_lookup_version }}
           files: |
             ./*.uf2
+            ./*.sha256

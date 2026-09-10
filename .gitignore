@@ -7,3 +7,17 @@ zmk-pmw3610-driver
 .vscode
 zmk-input-processor-mixer
 zmk-pointer-2s-mixer
+
+# Local build products and generated release files
+build/
+build-*/
+*.uf2
+SHA256SUMS.txt
+BUILD-INFO.txt
+
+# Local migration scripts, uploaded snapshots, and safety backups
+apply_*.py
+*-source.txt
+*-module.txt
+*.before-*
+before-*/

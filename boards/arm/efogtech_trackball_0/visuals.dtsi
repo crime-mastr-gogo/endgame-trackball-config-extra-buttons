@@ -365,6 +365,33 @@
                         flash-duration-ms = <500>;
                 };
 
+                status_battery_high {
+                        label = "Report battery above 50 percent";
+                        event-type = "custom";
+                        custom-event-name = "status-battery-high";
+                        colors = [00 FF 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_battery_medium {
+                        label = "Report battery from 21 to 50 percent";
+                        event-type = "custom";
+                        custom-event-name = "status-battery-medium";
+                        colors = [FF 80 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_battery_low {
+                        label = "Report battery at 20 percent or below";
+                        event-type = "custom";
+                        custom-event-name = "status-battery-low";
+                        colors = [FF 00 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
                 vibration_enabled_event {
                         label = "Vibration enabled";
                         event-type = "custom";

@@ -13,6 +13,7 @@
 
 #include <drivers/behavior.h>
 #include <zmk/behavior.h>
+#include <zmk/battery.h>
 #include <zmk/ble.h>
 
 #include <zmk_adaptive_feedback/adaptive_feedback.h>
@@ -24,6 +25,7 @@
 #define ACTION_REPORT_SCROLL 3
 #define ACTION_TOGGLE_VIBRATION 4
 #define ACTION_TOGGLE_LED 5
+#define ACTION_REPORT_BATTERY 6
 
 #define SETTINGS_APPLY_DELAY_MS 500
 #define LED_DISABLE_DELAY_MS 425
@@ -49,6 +51,9 @@ ZAF_CUSTOM_EVENT_DEFINE(status_bluetooth, "status-bluetooth");
 ZAF_CUSTOM_EVENT_DEFINE(status_pointer, "status-pointer");
 ZAF_CUSTOM_EVENT_DEFINE(status_scroll_standard, "status-scroll-standard");
 ZAF_CUSTOM_EVENT_DEFINE(status_scroll_high_res, "status-scroll-high-res");
+ZAF_CUSTOM_EVENT_DEFINE(status_battery_high, "status-battery-high");
+ZAF_CUSTOM_EVENT_DEFINE(status_battery_medium, "status-battery-medium");
+ZAF_CUSTOM_EVENT_DEFINE(status_battery_low, "status-battery-low");
 ZAF_CUSTOM_EVENT_DEFINE(vibration_enabled_event, "vibration-enabled");
 ZAF_CUSTOM_EVENT_DEFINE(vibration_disabled_event, "vibration-disabled");
 ZAF_CUSTOM_EVENT_DEFINE(led_enabled_event, "led-enabled");
@@ -129,13 +134,23 @@ static void led_disable_work_handler(struct k_work *work) {
 K_WORK_DELAYABLE_DEFINE(apply_settings_work, apply_settings_work_handler);
 K_WORK_DELAYABLE_DEFINE(led_disable_work, led_disable_work_handler);
 
+void endgame_cancel_status_feedback(void) {
+    k_work_cancel_delayable(&pulse_work);
+    pulse_pattern_length = 0U;
+    pulse_pattern_index = 0U;
+
+    if (device_is_ready(motor_gpio.port)) {
+        gpio_pin_set_dt(&motor_gpio, 0);
+    }
+}
+
 static void start_pattern(const uint16_t *pattern, uint8_t length) {
+    /* A newer report always replaces an unfinished direct status pattern. */
+    endgame_cancel_status_feedback();
+
     if (!vibration_enabled || length == 0U || length > MAX_PATTERN_ENTRIES) {
         return;
     }
-
-    k_work_cancel_delayable(&pulse_work);
-    gpio_pin_set_dt(&motor_gpio, 0);
 
     for (uint8_t i = 0; i < length; i++) {
         pulse_pattern[i] = pattern[i];
@@ -180,6 +195,30 @@ static void report_bluetooth(void) {
         for (uint8_t i = 0; i < profile; i++) {
             append_pulse(&length, 80U, 85U);
         }
+    }
+
+    start_pattern(pulse_pattern, length);
+}
+
+static void report_battery(void) {
+    const uint8_t charge = zmk_battery_state_of_charge();
+    const uint8_t long_pulses = charge / 25U;
+    const uint8_t short_pulses = (charge % 25U) / 5U;
+    uint8_t length = 0U;
+
+    for (uint8_t i = 0; i < long_pulses; i++) {
+        append_pulse(&length, 260U, 180U);
+    }
+    for (uint8_t i = 0; i < short_pulses; i++) {
+        append_pulse(&length, 60U, 75U);
+    }
+
+    if (charge <= 20U) {
+        zaf_custom_event_trigger(&status_battery_low);
+    } else if (charge <= 50U) {
+        zaf_custom_event_trigger(&status_battery_medium);
+    } else {
+        zaf_custom_event_trigger(&status_battery_high);
     }
 
     start_pattern(pulse_pattern, length);
@@ -260,6 +299,9 @@ static int on_endgame_control_pressed(
         }
         break;
     }
+    case ACTION_REPORT_BATTERY:
+        report_battery();
+        break;
     case ACTION_TOGGLE_VIBRATION:
         vibration_enabled = !vibration_enabled;
         save_bool("endgame/feedback/vibration", vibration_enabled);
