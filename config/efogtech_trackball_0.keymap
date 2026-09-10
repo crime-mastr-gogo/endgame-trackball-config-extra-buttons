@@ -103,11 +103,11 @@ macros {
 				&trans                      &trans
 
 				// Left A, Left B, Right A, Right B
-				&hold_power_off             &studio_unlock
-				&scroll_mode_toggle         &hold_clear_all_bt
+				&hold_power_off 0 0             &studio_unlock
+				&scroll_mode_toggle         &hold_clear_all_bt 0 0
 
 			        // IO1, IO2 and IO3
-                                &hold_clear_current_bt      &hold_sens_reset
+                                &hold_clear_current_bt 0 0      &hold_sens_reset 0 0
                                 &trans
 			>;
 		};
