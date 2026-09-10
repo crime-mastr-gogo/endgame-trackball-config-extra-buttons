@@ -386,7 +386,7 @@
 			colors = [80 00 FF];
 			animation = "flash";
 			flash-duration-ms = <350>;
-			feedback-pattern = <220 180 60 60 60 60 60 60 60 60 60>;
+			feedback-pattern = <60 60 60 60 60 60 60 60 60>;
 		};
 
 		evt_no_ep {
