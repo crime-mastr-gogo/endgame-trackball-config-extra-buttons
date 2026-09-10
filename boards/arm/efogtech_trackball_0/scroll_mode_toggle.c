@@ -133,6 +133,10 @@ SETTINGS_STATIC_HANDLER_DEFINE(
     scroll_mode_settings_commit,
     NULL);
 
+bool endgame_standard_scroll_enabled(void) {
+    return zmk_keymap_layer_active(STANDARD_SCROLL_LAYER);
+}
+
 static int on_scroll_mode_toggle_pressed(
     struct zmk_behavior_binding *binding,
     struct zmk_behavior_binding_event event) {

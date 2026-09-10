@@ -1,0 +1,5 @@
+description: Report current Endgame settings or toggle persistent feedback outputs
+
+compatible: "zmk,behavior-endgame-control"
+
+include: one_param.yaml

@@ -6,8 +6,9 @@
 #define LAYER_DEVICE       2
 #define LAYER_SCROLL       3
 #define LAYER_SNIPE        4
-#define LAYER_USER         5
+#define LAYER_FEEDBACK     5
 #define LAYER_STANDARD_SCROLL 6
+#define LAYER_STATUS       7
 #endif
 
 / {
@@ -100,12 +101,25 @@
 			persistent;
 		};
 
-		layer_user {
+		layer_feedback {
+			label = "Feedback controls";
 			event-type = "layer";
-			layer-index = <LAYER_USER>;
-			colors = [00 00 00];
+			layer-index = <LAYER_FEEDBACK>;
+			colors = [40 00 40];
+			animation = "flash";
+			flash-duration-ms = <350>;
 			persistent;
 		};
+
+                layer_status {
+                        label = "Status report";
+                        event-type = "layer";
+                        layer-index = <LAYER_STATUS>;
+                        colors = [00 20 40];
+                        animation = "flash";
+                        flash-duration-ms = <350>;
+                        persistent;
+                };
 				layer_standard_scroll {
 			label = "Standard scroll mode";
 			event-type = "layer";
@@ -169,6 +183,18 @@
 			feedback-pattern = <220 70 70>;
 		};
 
+                pointer_sensitivity_highest {
+                        label = "Pointer sensitivity at highest level";
+                        event-type = "custom";
+                        custom-event-name = "pointer-sensitivity-highest";
+                        colors = [FF 00 FF];
+                        animation = "blink";
+                        blink-on-ms = <160>;
+                        blink-off-ms = <80>;
+                        flash-duration-ms = <1000>;
+                        feedback-pattern = <350 80 350>;
+                };
+
                 pointer_sensitivity_lowest {
                         label = "Pointer sensitivity at lowest level";
                         event-type = "custom";
@@ -207,6 +233,18 @@
 			animation = "flash";
 			flash-duration-ms = <250>;
 			feedback-pattern = <220 70 70 70 70>;
+		};
+
+		twist_sensitivity_highest {
+			label = "Twist sensitivity at highest level";
+			event-type = "custom";
+			custom-event-name = "twist-sensitivity-highest";
+			colors = [00 FF FF];
+			animation = "blink";
+			blink-on-ms = <160>;
+			blink-off-ms = <80>;
+			flash-duration-ms = <1000>;
+			feedback-pattern = <350 80 350>;
 		};
 
 		twist_sensitivity_lowest {
@@ -281,6 +319,87 @@
 			flash-duration-ms = <600>;
 			feedback-pattern = <70 70 220 70 220>;
 		};
+
+                status_twist {
+                        label = "Report twist sensitivity";
+                        event-type = "custom";
+                        custom-event-name = "status-twist";
+                        colors = [00 00 FF];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_bluetooth {
+                        label = "Report Bluetooth profile";
+                        event-type = "custom";
+                        custom-event-name = "status-bluetooth";
+                        colors = [80 00 FF];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_pointer {
+                        label = "Report pointer sensitivity";
+                        event-type = "custom";
+                        custom-event-name = "status-pointer";
+                        colors = [00 FF 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_scroll_standard {
+                        label = "Report standard scroll";
+                        event-type = "custom";
+                        custom-event-name = "status-scroll-standard";
+                        colors = [FF 00 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                status_scroll_high_res {
+                        label = "Report high-resolution scroll";
+                        event-type = "custom";
+                        custom-event-name = "status-scroll-high-res";
+                        colors = [00 FF 00];
+                        animation = "flash";
+                        flash-duration-ms = <500>;
+                };
+
+                vibration_enabled_event {
+                        label = "Vibration enabled";
+                        event-type = "custom";
+                        custom-event-name = "vibration-enabled";
+                        colors = [00 FF 00];
+                        animation = "flash";
+                        flash-duration-ms = <400>;
+                };
+
+                vibration_disabled_event {
+                        label = "Vibration disabled";
+                        event-type = "custom";
+                        custom-event-name = "vibration-disabled";
+                        colors = [FF 80 00];
+                        animation = "flash";
+                        flash-duration-ms = <400>;
+                };
+
+                led_enabled_event {
+                        label = "LED enabled";
+                        event-type = "custom";
+                        custom-event-name = "led-enabled";
+                        colors = [00 FF FF];
+                        animation = "flash";
+                        flash-duration-ms = <400>;
+                };
+
+                led_disabled_event {
+                        label = "LED disabled";
+                        event-type = "custom";
+                        custom-event-name = "led-disabled";
+                        colors = [FF 80 00];
+                        animation = "flash";
+                        flash-duration-ms = <400>;
+                };
 
 		idle {
 			label = "Idle";

@@ -291,6 +291,48 @@
                         reset;
                 };
 
+                endgame_control: endgame_control {
+                        compatible = "zmk,behavior-endgame-control";
+                        display-name = "Endgame Status and Feedback Control";
+                        #binding-cells = <1>;
+                };
+
+                hold_power_off: hold_power_off {
+                        compatible = "zmk,behavior-hold-tap";
+                        display-name = "Hold 2 Seconds: Power Off";
+                        #binding-cells = <0>;
+                        flavor = "tap-preferred";
+                        tapping-term-ms = <2000>;
+                        bindings = <&power_off_fb>, <&none>;
+                };
+
+                hold_clear_current_bt: hold_clear_current_bt {
+                        compatible = "zmk,behavior-hold-tap";
+                        display-name = "Hold 2 Seconds: Clear Current Bluetooth";
+                        #binding-cells = <0>;
+                        flavor = "tap-preferred";
+                        tapping-term-ms = <2000>;
+                        bindings = <&clear_current_bt_fb>, <&none>;
+                };
+
+                hold_clear_all_bt: hold_clear_all_bt {
+                        compatible = "zmk,behavior-hold-tap";
+                        display-name = "Hold 2 Seconds: Clear All Bluetooth";
+                        #binding-cells = <0>;
+                        flavor = "tap-preferred";
+                        tapping-term-ms = <2000>;
+                        bindings = <&clear_all_bt_fb>, <&none>;
+                };
+
+                hold_sens_reset: hold_sens_reset {
+                        compatible = "zmk,behavior-hold-tap";
+                        display-name = "Hold 2 Seconds: Reset Sensitivity";
+                        #binding-cells = <0>;
+                        flavor = "tap-preferred";
+                        tapping-term-ms = <2000>;
+                        bindings = <&sens_reset_fb>, <&none>;
+                };
+
                 drag_lock: drag_lock {
                         compatible = "zmk,behavior-drag-lock";
                         display-name = "Drag Lock";

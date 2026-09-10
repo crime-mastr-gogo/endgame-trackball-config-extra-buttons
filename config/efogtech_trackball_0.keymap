@@ -13,8 +13,9 @@
 #define LAYER_DEVICE       2
 #define LAYER_SCROLL       3
 #define LAYER_SNIPE        4
-#define LAYER_USER         5
+#define LAYER_FEEDBACK     5
 #define LAYER_STANDARD_SCROLL 6
+#define LAYER_STATUS       7
 #endif
 
 / {
@@ -68,7 +69,7 @@ macros {
 				 */
 				&mo LAYER_EXTRAS             &drag_lock
 				&trans                      &type_right_encoder_b
-				&trans                      &trans
+				&mo LAYER_FEEDBACK          &mo LAYER_STATUS
 				&mo LAYER_DEVICE
 			>;
 		};
@@ -102,11 +103,11 @@ macros {
 				&trans                      &trans
 
 				// Left A, Left B, Right A, Right B
-				&power_off_fb               &studio_unlock
-				&scroll_mode_toggle         &clear_all_bt_fb
+				&hold_power_off             &studio_unlock
+				&scroll_mode_toggle         &hold_clear_all_bt
 
 			        // IO1, IO2 and IO3
-                                &clear_current_bt_fb        &sens_reset_fb
+                                &hold_clear_current_bt      &hold_sens_reset
                                 &trans
 			>;
 		};
@@ -150,19 +151,17 @@ macros {
 		};
 
 		layer5 {
-			display-name = "Extra Layer";
+			display-name = "Feedback Controls";
 			bindings = <
-				// Original eight buttons
 				&trans    &trans
 				&trans    &trans
 				&trans    &trans
 				&trans    &trans
 
-				// Left A, Left B, Right A, Right B
-				&trans    &trans
-				&trans    &trans
+				// Left A: vibration toggle; Left B: LED toggle
+				&endgame_control 4    &endgame_control 5
+				&trans                &trans
 
-				// IO1, IO2 and IO3
 				&trans    &trans
 				&trans
 			>;
@@ -186,6 +185,25 @@ macros {
 				&trans
 			>;
 		};
+
+		layer7 {
+			display-name = "Status Report";
+			bindings = <
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A: twist; Left B: Bluetooth
+				&endgame_control 0    &endgame_control 1
+				// Right A: pointer; Right B: scroll mode
+				&endgame_control 2    &endgame_control 3
+
+				&trans    &trans
+				&trans
+			>;
+		};
+
 	};
 
 		trackball {

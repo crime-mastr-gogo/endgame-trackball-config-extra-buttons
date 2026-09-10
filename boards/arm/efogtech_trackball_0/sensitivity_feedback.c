@@ -65,12 +65,16 @@ ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_decreased,
                         "pointer-sensitivity-decreased");
 ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_lowest,
                         "pointer-sensitivity-lowest");
+ZAF_CUSTOM_EVENT_DEFINE(pointer_sensitivity_highest,
+                        "pointer-sensitivity-highest");
 ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_increased,
                         "twist-sensitivity-increased");
 ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_decreased,
                         "twist-sensitivity-decreased");
 ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_lowest,
                         "twist-sensitivity-lowest");
+ZAF_CUSTOM_EVENT_DEFINE(twist_sensitivity_highest,
+                        "twist-sensitivity-highest");
 ZAF_CUSTOM_EVENT_DEFINE(sensitivity_reset,
                         "sensitivity-reset");
 
@@ -196,17 +200,47 @@ SETTINGS_STATIC_HANDLER_DEFINE(
     sensitivity_settings_commit,
     NULL);
 
-static bool value_is_endpoint(float value, float minimum,
-                              float maximum) {
-    const bool at_minimum =
-        value >= minimum - FLOAT_TOLERANCE &&
-        value <= minimum + FLOAT_TOLERANCE;
+static bool value_is_minimum(float value, float minimum) {
+    return value >= minimum - FLOAT_TOLERANCE &&
+           value <= minimum + FLOAT_TOLERANCE;
+}
 
-    const bool at_maximum =
-        value >= maximum - FLOAT_TOLERANCE &&
-        value <= maximum + FLOAT_TOLERANCE;
+static bool value_is_maximum(float value, float maximum) {
+    return value >= maximum - FLOAT_TOLERANCE &&
+           value <= maximum + FLOAT_TOLERANCE;
+}
 
-    return at_minimum || at_maximum;
+static uint8_t sensitivity_level(float value, const float *levels,
+                                 size_t level_count) {
+    size_t closest = 0;
+    float closest_distance = value > levels[0]
+                                 ? value - levels[0]
+                                 : levels[0] - value;
+
+    for (size_t i = 1; i < level_count; i++) {
+        const float distance = value > levels[i]
+                                   ? value - levels[i]
+                                   : levels[i] - value;
+
+        if (distance < closest_distance) {
+            closest = i;
+            closest_distance = distance;
+        }
+    }
+
+    return (uint8_t)(closest + 1U);
+}
+
+uint8_t endgame_pointer_sensitivity_level(void) {
+    return sensitivity_level(
+        p2sm_get_move_coef(), pointer_levels,
+        sizeof(pointer_levels) / sizeof(pointer_levels[0]));
+}
+
+uint8_t endgame_twist_sensitivity_level(void) {
+    return sensitivity_level(
+        p2sm_get_twist_coef(), twist_levels,
+        sizeof(twist_levels) / sizeof(twist_levels[0]));
 }
 
 static float calculate_new_value(float current, const float *levels,
@@ -231,21 +265,25 @@ static float calculate_new_value(float current, const float *levels,
 }
 
 static void trigger_sensitivity_feedback(bool scroll, bool increase,
-                                         bool endpoint) {
+                                         bool at_minimum,
+                                         bool at_maximum) {
     if (scroll) {
-        if (endpoint) {
+        if (at_minimum) {
             zaf_custom_event_trigger(&twist_sensitivity_lowest);
+        } else if (at_maximum) {
+            zaf_custom_event_trigger(&twist_sensitivity_highest);
         } else if (increase) {
             zaf_custom_event_trigger(&twist_sensitivity_increased);
         } else {
             zaf_custom_event_trigger(&twist_sensitivity_decreased);
         }
-
         return;
     }
 
-    if (endpoint) {
+    if (at_minimum) {
         zaf_custom_event_trigger(&pointer_sensitivity_lowest);
+    } else if (at_maximum) {
+        zaf_custom_event_trigger(&pointer_sensitivity_highest);
     } else if (increase) {
         zaf_custom_event_trigger(&pointer_sensitivity_increased);
     } else {
@@ -308,7 +346,8 @@ static int on_sensitivity_feedback_pressed(
     trigger_sensitivity_feedback(
         config->scroll,
         config->increase,
-        value_is_endpoint(new_value, minimum, maximum));
+        value_is_minimum(new_value, minimum),
+        value_is_maximum(new_value, maximum));
 
     return ZMK_BEHAVIOR_OPAQUE;
 }
