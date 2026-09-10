@@ -135,3 +135,51 @@ jobs:
           files: |
             ./*.uf2
             ./*.sha256
+
+  v4-release:
+    name: Publish tested v4.0.0 assets
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/final-15-button-firmware'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout release assets
+        uses: actions/checkout@v4
+      - name: Verify attached release files
+        run: |
+          set -euo pipefail
+          cd release-assets/v4.0.0
+          echo "3e954849bbfc2edd5814a285244cb1c221f905035d86221f903c9f002d6305ab  endgame-final-15-button-firmware-v4.0.0.uf2" | sha256sum -c -
+          echo "2bef6b31928cabf5c98eeeccc80616e38e6f5cc943f7b7a29188259c12d81048  Endgame-15-Button-Firmware-Guide-v4.0.0.pdf" | sha256sum -c -
+      - name: Prepare verification files
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          cp release-assets/v4.0.0/endgame-final-15-button-firmware-v4.0.0.uf2 dist/
+          cp release-assets/v4.0.0/Endgame-15-Button-Firmware-Guide-v4.0.0.pdf dist/
+          (
+            cd dist
+            sha256sum endgame-final-15-button-firmware-v4.0.0.uf2 Endgame-15-Button-Firmware-Guide-v4.0.0.pdf > SHA256SUMS.txt
+          )
+          {
+            echo "release=v4.0.0"
+            echo "source_branch=final-15-button-firmware"
+            echo "tested_source_commit=4fbc394b1ea7bc97e88d9c300831be74ad17828b"
+            echo "release_workflow_commit=${{ github.sha }}"
+            echo "workflow_run=${{ github.run_id }}"
+          } > dist/BUILD-INFO.txt
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v4.0.0
+          name: "Endgame 15-Button Firmware v4.0.0"
+          target_commitish: 4fbc394b1ea7bc97e88d9c300831be74ad17828b
+          body_path: release-assets/v4.0.0/RELEASE-NOTES.md
+          files: |
+            dist/endgame-final-15-button-firmware-v4.0.0.uf2
+            dist/Endgame-15-Button-Firmware-Guide-v4.0.0.pdf
+            dist/SHA256SUMS.txt
+            dist/BUILD-INFO.txt
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
