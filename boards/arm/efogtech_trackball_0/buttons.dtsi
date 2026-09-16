@@ -5,7 +5,7 @@
         gpio-map-mask = <0xffffffff 0xffffffc0>;
         gpio-map-pass-thru = <0 0x3f>;
         gpio-map
-            // Top-top-right then CCW
+            // Original eight buttons
             = <0 0 &gpio0 26 0>
             , <1 0 &gpio0 27 0>
             , <2 0 &gpio0 1 0>
@@ -13,60 +13,159 @@
             , <4 0 &gpio0 8 0>
             , <5 0 &gpio0 7 0>
             , <6 0 &gpio0 5 0>
-            , <7 0 &gpio0 4 0>;
+            , <7 0 &gpio0 4 0>
+
+            // IO1, IO2 and IO3
+            , <8 0 &gpio0 11 0>
+            , <9 0 &gpio0 15 0>
+            , <10 0 &gpio0 20 0>;
     };
 
-    kscan0: kscan {
+    /*
+     * Composite scanner:
+     * - Original buttons and IO1/IO2/IO3
+     * - Two switches replacing the right encoder
+     * - Two switches replacing the left encoder
+     *
+     * Each former encoder pin has its own scanner to avoid
+     * the multi-GPIO scanner bootloop encountered previously.
+     */
+    kscan0: kscan_composite {
+        compatible = "zmk,kscan-composite";
+        rows = <15>;
+        columns = <1>;
+
+        original_buttons {
+            kscan = <&kscan_buttons>;
+        };
+
+        right_switch_a {
+            kscan = <&kscan_right_a>;
+            row-offset = <11>;
+        };
+
+        right_switch_b {
+            kscan = <&kscan_right_b>;
+            row-offset = <12>;
+        };
+
+        left_switch_a {
+            kscan = <&kscan_left_a>;
+            row-offset = <13>;
+        };
+
+        left_switch_b {
+            kscan = <&kscan_left_b>;
+            row-offset = <14>;
+        };
+    };
+
+    kscan_buttons: kscan_buttons {
         compatible = "zmk,kscan-gpio-direct";
         input-gpios
-        = <&btns 1 (GPIO_ACTIVE_LOW)>
-        , <&btns 0 (GPIO_ACTIVE_LOW)>
-        , <&btns 2 (GPIO_ACTIVE_LOW)>
-        , <&btns 7 (GPIO_ACTIVE_LOW)>
-        , <&btns 3 (GPIO_ACTIVE_LOW)>
-        , <&btns 6 (GPIO_ACTIVE_LOW)>
-        , <&btns 4 (GPIO_ACTIVE_LOW)>
-        , <&btns 5 (GPIO_ACTIVE_LOW)>
-        ;
+            // Original eight buttons
+            = <&btns 1 (GPIO_ACTIVE_LOW)>
+            , <&btns 0 (GPIO_ACTIVE_LOW)>
+            , <&btns 2 (GPIO_ACTIVE_LOW)>
+            , <&btns 7 (GPIO_ACTIVE_LOW)>
+            , <&btns 3 (GPIO_ACTIVE_LOW)>
+            , <&btns 6 (GPIO_ACTIVE_LOW)>
+            , <&btns 4 (GPIO_ACTIVE_LOW)>
+            , <&btns 5 (GPIO_ACTIVE_LOW)>
+
+            // IO1, IO2 and IO3
+            , <&btns 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&btns 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&btns 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P1.08: former right-encoder A pin
+    kscan_right_a: kscan_right_a {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio1 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P1.09: former right-encoder B pin
+    kscan_right_b: kscan_right_b {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio1 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P0.17: former left-encoder A pin
+    kscan_left_a: kscan_left_a {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio0 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    // P0.16: former left-encoder B pin
+    kscan_left_b: kscan_left_b {
+        compatible = "zmk,kscan-gpio-direct";
+        input-gpios
+            = <&gpio0 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
     };
 
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        rows = <12>;
+        rows = <15>;
         columns = <1>;
         map =
             <
+                // Original eight buttons
                 RC(0, 0)  RC(1, 0)
                 RC(2, 0)  RC(3, 0)
                 RC(4, 0)  RC(5, 0)
                 RC(6, 0)  RC(7, 0)
-                RC(8, 0)  RC(9, 0)
-                RC(10, 0) RC(11, 0)
+
+                // Seven-button bottom row, from left to right:
+                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
+                RC(13, 0) RC(14, 0) RC(11, 0) RC(12, 0)
+                RC(8, 0)  RC(9, 0)  RC(10, 0)
             >;
     };
 
     physical_layout0: physical_layout_0 {
         compatible = "zmk,physical-layout";
-        display-name = "Default Layout";
+        display-name = "Ankur 15 Buttons";
 
         transform = <&default_transform>;
         kscan = <&kscan0>;
 
-        keys  //               w     h     x     y     rot  rx   ry
-        = <&key_physical_attrs 200   150   275   0     0    8    8  >
-        , <&key_physical_attrs 200   150   525   0     0    8    8  >
-        , <&key_physical_attrs 150   375   75    25    0    8    8  >
-        , <&key_physical_attrs 150   375   775   25    0    8    8  >
-        , <&key_physical_attrs 150   375   75    450   0    8    8  >
-        , <&key_physical_attrs 150   375   775   450   0    8    8  >
-        , <&key_physical_attrs 200   150   275   700   0    8    8  >
-        , <&key_physical_attrs 200   150   525   700   0    8    8  >
+                keys  //               w     h     x     y     rot  rx   ry
 
-        , <&key_physical_attrs 35    100   15    750   0    8    8  >
-        , <&key_physical_attrs 35    100   950   750   0    8    8  >
+        /*
+         * Original eight buttons.
+         * Their relative positions and dimensions are unchanged.
+         * The complete group is shifted right by 150 units to
+         * create space for the two left-side switches.
+         */
+        = <&key_physical_attrs 200   150   425   0     0    8    8>
+        , <&key_physical_attrs 200   150   675   0     0    8    8>
+        , <&key_physical_attrs 150   375   225   25    0    8    8>
+        , <&key_physical_attrs 150   375   925   25    0    8    8>
+        , <&key_physical_attrs 150   375   225   450   0    8    8>
+        , <&key_physical_attrs 150   375   925   450   0    8    8>
+        , <&key_physical_attrs 200   150   425   700   0    8    8>
+        , <&key_physical_attrs 200   150   675   700   0    8    8>
 
-        , <&key_physical_attrs 100   35    65    850   0    8    8  >
-        , <&key_physical_attrs 100   35    835   850   0    8    8  >
+        /*
+         * Physical order: Left B, Left A, Right A, Right B, IO1, IO2, IO3.
+         * Logical indices remain Left A (8), Left B (9), then the others.
+         */
+        , <&key_physical_attrs 120   180   365   900   0    8    8>
+        , <&key_physical_attrs 120   180   225   900   0    8    8>
+        , <&key_physical_attrs 120   180   505   900   0    8    8>
+        , <&key_physical_attrs 120   180   645   900   0    8    8>
+        , <&key_physical_attrs 120   180   785   900   0    8    8>
+        , <&key_physical_attrs 120   180   925   900   0    8    8>
+        , <&key_physical_attrs 120   180   1065  900   0    8    8>
         ;
     };
 
@@ -76,7 +175,9 @@
 
         layout1: layout1 {
             physical-layout = <&physical_layout0>;
-            positions = <0>, <1>, <2>, <3>, <4>, <5>, <6>, <7>;
+            positions =
+                <0>, <1>, <2>, <3>, <4>, <5>, <6>, <7>,
+                <8>, <9>, <10>, <11>, <12>, <13>, <14>;
         };
     };
 };

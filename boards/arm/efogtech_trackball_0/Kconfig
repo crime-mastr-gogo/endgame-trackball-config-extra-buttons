@@ -1,0 +1,6 @@
+config ANKUR_RGB_PRESENT
+    bool "RGB hardware fitted to this customised Endgame"
+    default y
+    help
+      Explicit hardware selection. IO1 and IO2 are button inputs and must
+      never be used for the original RGB detection probe.
