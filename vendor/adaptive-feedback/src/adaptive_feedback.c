@@ -262,22 +262,6 @@ static const struct zaf_event_info *zaf_resolve(void) {
         }
     }
 
-    if (zaf_state.usb_event_ticks != 0xFFFF) {
-        return zaf_evt_eff_cfg(zaf_state.usb_connected
-                               ? ZAF_EVTIDX_USB_CONN : ZAF_EVTIDX_USB_DISCONN, 0);
-    }
-
-    for (int i = CONFIG_ADAPTIVE_FEEDBACK_MAX_BT_DEVICES - 1; i >= 0; i--) {
-        if (zaf_state.ble_event_ticks[i] != 0xFFFF) {
-            return zaf_evt_eff_cfg(ZAF_EVTIDX_BLE_PROFILE, (uint8_t)i);
-        }
-    }
-
-    if (zaf_state.studio_event_ticks != 0xFFFF) {
-        return zaf_evt_eff_cfg(zaf_state.studio_unlocked
-                               ? ZAF_EVTIDX_STUDIO_UNLOCK : ZAF_EVTIDX_STUDIO_LOCK, 0);
-    }
-
     STRUCT_SECTION_FOREACH(zaf_custom_event, cevt) {
         if (cevt->pending && cevt->info.color_count > 0) {
             static struct zaf_event_info zaf_custom_resolve_buf;
@@ -292,6 +276,22 @@ static const struct zaf_event_info *zaf_resolve(void) {
             zaf_copy_feedback_pattern(&zaf_custom_resolve_buf, ci);
             return &zaf_custom_resolve_buf;
         }
+    }
+
+    if (zaf_state.usb_event_ticks != 0xFFFF) {
+        return zaf_evt_eff_cfg(zaf_state.usb_connected
+                               ? ZAF_EVTIDX_USB_CONN : ZAF_EVTIDX_USB_DISCONN, 0);
+    }
+
+    for (int i = CONFIG_ADAPTIVE_FEEDBACK_MAX_BT_DEVICES - 1; i >= 0; i--) {
+        if (zaf_state.ble_event_ticks[i] != 0xFFFF) {
+            return zaf_evt_eff_cfg(ZAF_EVTIDX_BLE_PROFILE, (uint8_t)i);
+        }
+    }
+
+    if (zaf_state.studio_event_ticks != 0xFFFF) {
+        return zaf_evt_eff_cfg(zaf_state.studio_unlocked
+                               ? ZAF_EVTIDX_STUDIO_UNLOCK : ZAF_EVTIDX_STUDIO_LOCK, 0);
     }
 
     const uint8_t layer = zaf_state.active_layer;
@@ -1427,6 +1427,12 @@ static int zaf_custom_event_trigger_locked(struct zaf_custom_event *evt) {
     }
     if (!evt || (evt->info.color_count == 0 && evt->info.feedback_pattern_len == 0)) {
         return -EINVAL;
+    }
+    /* The newest user action replaces older transient actions. This avoids
+     * expired, never-visible events accumulating behind another animation. */
+    STRUCT_SECTION_FOREACH(zaf_custom_event, pending) {
+        pending->pending = false;
+        pending->ticks = 0;
     }
     evt->pending = true;
     bool urgent = !strcmp(evt->name, "power-off-feedback") ||

@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/util.h>
 #include <zephyr/settings/settings.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/input/input.h>
@@ -30,7 +31,11 @@ static struct ankur_settings state = {1, 6, 4, 1, 1, 1};
 static struct ankur_settings saved = {0};
 K_MUTEX_DEFINE(state_lock);
 static bool restored, suspended, dragging, powering_off;
-static uint32_t epoch;
+static uint16_t epoch;
+static int64_t guarded_pressed_at[4];
+static uint16_t guarded_epoch[4];
+static uint8_t guarded_position[4];
+static uint8_t guarded_held;
 static const float pointer_levels[ANKUR_LEVELS] = {
     .1f,.116667f,.133333f,.15f,.166667f,.183333f,.2f,.216667f,.233333f,.25f,
     .305f,.36f,.415f,.47f,.525f,.58f,.635f,.69f,.745f,.8f
@@ -95,10 +100,16 @@ static void apply(void) {
 static int ankur_settings_set(const char *name, size_t len, settings_read_cb read, void *arg) {
     if (strcmp(name, "v1")) return -ENOENT;
     struct ankur_settings candidate;
-    if (len != sizeof(candidate)) return -EINVAL;
+    if (len != sizeof(candidate)) {
+        LOG_WRN("Ignoring incompatible settings record (%zu bytes)", len);
+        return 0;
+    }
     int rc = read(arg, &candidate, sizeof(candidate));
     if (rc != sizeof(candidate)) return rc < 0 ? rc : -EIO;
-    if (!ankur_settings_valid(&candidate)) return -EINVAL;
+    if (!ankur_settings_valid(&candidate)) {
+        LOG_WRN("Ignoring invalid custom settings; using safe defaults");
+        return 0;
+    }
     state = saved = candidate;
     return 0;
 }
@@ -212,33 +223,34 @@ static int execute(unsigned action) {
     k_mutex_unlock(&state_lock);
     return rc;
 }
-struct control_data { bool held; uint32_t position, epoch; int64_t pressed_at; };
 static int pressed(struct zmk_behavior_binding *binding, struct zmk_behavior_binding_event e) {
     const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
     const struct control_config *cfg = dev->config;
-    struct control_data *data = dev->data;
     if (!ankur_guarded(cfg->action)) return execute(cfg->action);
-    if (!data->held || data->epoch != epoch) {
-        data->held = true; data->pressed_at = e.timestamp;
-        data->position = e.position; data->epoch = epoch;
+    unsigned slot = cfg->action - RESET_SENSITIVITY;
+    if (!(guarded_held & BIT(slot)) || guarded_epoch[slot] != epoch) {
+        guarded_held |= BIT(slot);
+        guarded_pressed_at[slot] = e.timestamp;
+        guarded_position[slot] = e.position;
+        guarded_epoch[slot] = epoch;
     }
     return ZMK_BEHAVIOR_OPAQUE;
 }
 static int released(struct zmk_behavior_binding *binding, struct zmk_behavior_binding_event e) {
     const struct device *dev = zmk_behavior_get_binding(binding->behavior_dev);
     const struct control_config *cfg = dev->config;
-    struct control_data *data = dev->data;
     if (!ankur_guarded(cfg->action)) return ZMK_BEHAVIOR_OPAQUE;
-    bool armed = data->held && data->position == e.position && data->epoch == epoch &&
-                 e.timestamp - data->pressed_at >= ANKUR_GUARD_MS;
-    data->held = false;
+    unsigned slot = cfg->action - RESET_SENSITIVITY;
+    bool armed = (guarded_held & BIT(slot)) && guarded_position[slot] == e.position &&
+                 guarded_epoch[slot] == epoch &&
+                 e.timestamp - guarded_pressed_at[slot] >= ANKUR_GUARD_MS;
+    guarded_held &= ~BIT(slot);
     return armed ? execute(cfg->action) : ZMK_BEHAVIOR_OPAQUE;
 }
 static const struct behavior_driver_api api = {.binding_pressed = pressed, .binding_released = released};
 #define CONTROL(n) \
-    static struct control_data data_##n; \
     static const struct control_config config_##n = {.action = DT_INST_PROP(n, action)}; \
-    BEHAVIOR_DT_INST_DEFINE(n, NULL, NULL, &data_##n, &config_##n, POST_KERNEL, \
+    BEHAVIOR_DT_INST_DEFINE(n, NULL, NULL, NULL, &config_##n, POST_KERNEL, \
                            CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &api);
 DT_INST_FOREACH_STATUS_OKAY(CONTROL)
 

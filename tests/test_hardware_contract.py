@@ -9,8 +9,16 @@ BOARD = ROOT / "boards/arm/efogtech_trackball_0"
 
 class HardwareContract(unittest.TestCase):
     def test_no_encoder_build_dependencies(self):
-        self.assertNotIn("zmk-ec11-ish-driver", (ROOT / "config/west.yml").read_text())
-        self.assertNotIn("CONFIG_EC11", (BOARD / "efogtech_trackball_0_defconfig").read_text())
+        west = (ROOT / "config/west.yml").read_text()
+        defconfig = (BOARD / "efogtech_trackball_0_defconfig").read_text()
+        encoders = (BOARD / "encoders.dtsi").read_text()
+        build = (ROOT / "build.yaml").read_text()
+        self.assertNotIn("zmk-ec11-ish-driver", west)
+        self.assertNotIn("zmk-behavior-follower", west)
+        self.assertNotIn("CONFIG_EC11", defconfig)
+        self.assertIn("CONFIG_ZMK_USB_LOGGING=n", defconfig)
+        self.assertNotIn("behaviors/follower.dtsi", encoders)
+        self.assertNotIn("zmk-usb-logging", build)
         self.assertNotIn("config EC11", (BOARD / "Kconfig.defconfig").read_text())
         self.assertNotIn("behavior-sensor-rotate", (BOARD / "behaviors_macros.dtsi").read_text())
         config = (ROOT / "config/efogtech_trackball_0.conf").read_text()
@@ -30,6 +38,38 @@ class HardwareContract(unittest.TestCase):
         for layer in bindings:
             self.assertEqual(layer.count("&"), 15)
         self.assertNotIn("DECLARE_ENCODERS", text)
+        self.assertNotIn("type_right_encoder_b", text)
+
+        without_comments = re.sub(r"/\*.*?\*/|//[^\n]*", " ", text, flags=re.S)
+        compact = " ".join(without_comments.split())
+        self.assertIn("&ltmkp LAYER_SNIPE LC(C) &ltmkp LAYER_SCROLL LC(V)", compact)
+        self.assertIn("&drag_lock &mo LAYER_EXTRAS &none &none &mo LAYER_FEEDBACK "
+                      "&mo LAYER_STATUS &mo LAYER_DEVICE", compact)
+        self.assertIn("&twist_sens_up_fb &trans &twist_sens_down_fb &bt BT_NXT "
+                      "&bt BT_PRV &ptr_sens_up_fb &ptr_sens_down_fb", compact)
+        self.assertIn("&studio_unlock &hold_power_off &scroll_mode_toggle "
+                      "&hold_clear_all_bt &hold_clear_current_bt &hold_sens_reset", compact)
+
+    def test_protected_action_contract(self):
+        controls = (BOARD / "custom_controls.dtsi").read_text()
+        source = (ROOT / "src/controls.c").read_text()
+        policy = (ROOT / "include/ankur/policy.h").read_text()
+        for name in ("hold_power_off", "hold_clear_current_bt",
+                     "hold_clear_all_bt", "hold_sens_reset"):
+            self.assertIn(name, controls)
+        self.assertIn("#define ANKUR_GUARD_MS 2000", policy)
+        self.assertIn("guarded_epoch[slot] == epoch", source)
+        self.assertIn("e.timestamp - guarded_pressed_at[slot] >= ANKUR_GUARD_MS", source)
+        self.assertIn("release_drag();", source)
+
+    def test_single_motor_owner(self):
+        pointer = (BOARD / "pointer.dtsi").read_text()
+        visuals = (BOARD / "visuals.dtsi").read_text()
+        adaptive = (ROOT / "vendor/adaptive-feedback/src/adaptive_feedback.c").read_text()
+        self.assertNotIn("feedback-gpios", pointer)
+        self.assertEqual(visuals.count("feedback-gpios"), 1)
+        self.assertNotIn("gpio_pin_set_dt", adaptive)
+        self.assertIn("fbc_trigger_pattern_priority", adaptive)
 
     def test_no_pin_probe_or_encoder_nodes(self):
         text = (BOARD / "efogtech_trackball_0.c").read_text()

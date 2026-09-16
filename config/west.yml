@@ -22,9 +22,6 @@ manifest:
     - name: zmk-auto-hold
       remote: efogdev
       revision: "e3b649f"
-    - name: zmk-behavior-follower
-      remote: efogdev
-      revision: "c27fe57"
     - name: zmk-keymap-shell
       remote: efogdev
       revision: "b712a64"
