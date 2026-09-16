@@ -19,6 +19,8 @@ class HardwareContract(unittest.TestCase):
         self.assertIn("CONFIG_ZMK_USB_LOGGING=n", defconfig)
         self.assertNotIn("behaviors/follower.dtsi", encoders)
         self.assertNotIn("zmk-usb-logging", build)
+        board_source = (BOARD / "efogtech_trackball_0.c").read_text()
+        self.assertIn("#ifdef CONFIG_LOG_DOMAIN_ID\nstatic int16_t settings_log_source_id", board_source)
         self.assertNotIn("config EC11", (BOARD / "Kconfig.defconfig").read_text())
         self.assertNotIn("behavior-sensor-rotate", (BOARD / "behaviors_macros.dtsi").read_text())
         config = (ROOT / "config/efogtech_trackball_0.conf").read_text()
