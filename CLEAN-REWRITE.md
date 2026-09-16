@@ -67,6 +67,10 @@ limits, destructive-action classification, and motor copying/cooldown/
 preemption/cancellation behavior. GitHub Actions also builds the complete ZMK
 firmware and stores it as the `ankurs-customised-endgame` artifact.
 
+Production builds retain the Studio USB-UART transport but omit USB debug
+logging and the unused encoder-follower module to preserve flash and RAM
+headroom.
+
 Compilation and host regression tests cannot prove electrical safety, sleep
 current, sensor operation, Bluetooth/ESB range or physical switch behavior.
 Those require the final hardware test. Keep the known-working UF2 and restore
