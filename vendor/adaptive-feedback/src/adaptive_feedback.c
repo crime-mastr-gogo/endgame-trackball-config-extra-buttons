@@ -204,14 +204,6 @@ static const struct zaf_dt_child zaf_dt_children[ZAF_DT_CHILD_COUNT] = {
     DT_FOREACH_CHILD_STATUS_OKAY(DT_DRV_INST(0), ZAF_CHILD_ENTRY)
 };
 
-#if DT_INST_NODE_HAS_PROP(0, feedback_gpios)
-static const struct gpio_dt_spec zaf_feedback_gpio_spec = GPIO_DT_SPEC_INST_GET(0, feedback_gpios);
-#endif
-
-#if DT_INST_NODE_HAS_PROP(0, feedback_extra_gpios)
-static const struct gpio_dt_spec zaf_feedback_extra_gpio_spec = GPIO_DT_SPEC_INST_GET(0, feedback_extra_gpios);
-#endif
-
 static struct zaf_device_config zaf_config;
 static struct zaf_runtime_state zaf_state;
 static struct led_rgb zaf_pixels[DT_INST_PROP(0, chain_length)];
@@ -219,12 +211,6 @@ static struct led_rgb zaf_pixels[DT_INST_PROP(0, chain_length)];
 static struct k_work_delayable zaf_save_work;
 static struct k_work_delayable zaf_save_evt_work;
 static struct k_work_delayable zaf_save_custom_work;
-
-static bool zaf_prev_extra_gpio_state;
-static uint16_t zaf_feedback_pattern[CONFIG_ZMK_ADAPTIVE_FEEDBACK_FEEDBACK_PATTERN_MAX_LEN];
-static uint8_t  zaf_feedback_pattern_len;
-static uint8_t  zaf_feedback_pattern_idx;
-static struct k_work_delayable zaf_feedback_step_work;
 
 static bool rgb_supported = true;
 void zaf_set_rgb_not_supported() {
@@ -613,7 +599,6 @@ static void zaf_apply_animation(const struct zaf_event_info *cfg) {
 }
 
 /* Motor GPIOs belong to the shared bounded driver, never to this renderer. */
-static void zaf_feedback_step_work_fn(struct k_work *work) { ARG_UNUSED(work); }
 static void zaf_trigger_feedback_priority(const uint16_t *pattern, const uint8_t len, uint8_t priority) {
     if (!zaf_config.feedback_enabled || !len ||
         len > CONFIG_ZMK_ADAPTIVE_FEEDBACK_FEEDBACK_PATTERN_MAX_LEN) return;
@@ -990,8 +975,6 @@ static int zaf_init(void) {
     k_work_init_delayable(&zaf_save_work, zaf_save_work_fn);
     k_work_init_delayable(&zaf_save_evt_work, zaf_save_evt_work_fn);
     k_work_init_delayable(&zaf_save_custom_work, zaf_save_custom_work_fn);
-    k_work_init_delayable(&zaf_feedback_step_work, zaf_feedback_step_work_fn);
-
     zaf_config.feedback_enabled  = DT_INST_PROP(0, feedback_enabled);
     zaf_config.feedback_delay_ms = DT_INST_PROP_OR(0, feedback_delay, 0);
 

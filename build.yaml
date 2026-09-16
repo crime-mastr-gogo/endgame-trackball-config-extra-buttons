@@ -20,5 +20,6 @@
 ---
 include:
   - board: efogtech_trackball_0
+    artifact-name: ankurs-customised-endgame
     cmake-args: -DCONFIG_ZMK_STUDIO=y
     snippet: studio-rpc-usb-uart zmk-usb-logging

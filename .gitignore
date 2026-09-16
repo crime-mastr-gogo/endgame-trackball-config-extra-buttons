@@ -1,7 +1,7 @@
 .west
 .zmk/
 modules
-zephyr
+/zephyr/
 /zmk/
 __pycache__/
 zmk-pmw3610-driver

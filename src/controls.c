@@ -92,7 +92,7 @@ static void apply(void) {
     fbc_set_enabled(restored && state.vibration && !suspended);
     zaf_set_led_enabled(restored && state.led && !suspended);
 }
-static int settings_set(const char *name, size_t len, settings_read_cb read, void *arg) {
+static int ankur_settings_set(const char *name, size_t len, settings_read_cb read, void *arg) {
     if (strcmp(name, "v1")) return -ENOENT;
     struct ankur_settings candidate;
     if (len != sizeof(candidate)) return -EINVAL;
@@ -102,12 +102,13 @@ static int settings_set(const char *name, size_t len, settings_read_cb read, voi
     state = saved = candidate;
     return 0;
 }
-static int settings_commit(void) {
+static int ankur_settings_commit(void) {
     restored = true;
     apply();
     return 0;
 }
-SETTINGS_STATIC_HANDLER_DEFINE(ankur, "ankur", NULL, settings_set, settings_commit, NULL);
+SETTINGS_STATIC_HANDLER_DEFINE(ankur, "ankur", NULL, ankur_settings_set,
+                               ankur_settings_commit, NULL);
 
 static void release_drag(void) {
     if (!dragging) return;
