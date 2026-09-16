@@ -81,10 +81,14 @@ static void save_work_fn(struct k_work *work) {
 }
 
 static void apply(void) {
-    p2sm_set_move_coef(pointer_levels[state.pointer]);
-    p2sm_set_twist_coef(twist_levels[state.twist]);
-    if (state.standard) zmk_keymap_layer_activate(ANKUR_STANDARD_LAYER);
-    else zmk_keymap_layer_deactivate(ANKUR_STANDARD_LAYER);
+    if (p2sm_get_move_coef() != pointer_levels[state.pointer])
+        p2sm_set_move_coef(pointer_levels[state.pointer]);
+    if (p2sm_get_twist_coef() != twist_levels[state.twist])
+        p2sm_set_twist_coef(twist_levels[state.twist]);
+    if (state.standard != zmk_keymap_layer_active(ANKUR_STANDARD_LAYER)) {
+        if (state.standard) zmk_keymap_layer_activate(ANKUR_STANDARD_LAYER);
+        else zmk_keymap_layer_deactivate(ANKUR_STANDARD_LAYER);
+    }
     fbc_set_enabled(restored && state.vibration && !suspended);
     zaf_set_led_enabled(restored && state.led && !suspended);
 }
@@ -245,7 +249,7 @@ static int lifecycle(const zmk_event_t *event) {
     }
     ++epoch; /* Armed destructive actions cannot survive a connection/sleep transition. */
     release_drag();
-    fbc_stop();
+    fbc_cancel_status();
     const struct zmk_activity_state_changed *activity = as_zmk_activity_state_changed(event);
     if (activity) {
         suspended = activity->state != ZMK_ACTIVITY_ACTIVE;

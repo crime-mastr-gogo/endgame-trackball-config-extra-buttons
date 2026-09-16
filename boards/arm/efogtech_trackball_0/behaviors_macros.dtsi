@@ -1,6 +1,5 @@
 #include <dt-bindings/zmk/keys.h>
 #include "custom_controls.dtsi"
-#include "custom_visuals.dtsi"
 #include <dt-bindings/zmk/pointing.h>
 #include <dt-bindings/zmk/outputs.h>
 #include <dt-bindings/zmk/adaptive_feedback.h>

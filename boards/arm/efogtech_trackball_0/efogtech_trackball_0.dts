@@ -12,6 +12,7 @@
 #include "pointer.dtsi"
 #include "encoders.dtsi"
 #include "visuals.dtsi"
+#include "custom_visuals.dtsi"
 
 / {
     model = "Endgame";

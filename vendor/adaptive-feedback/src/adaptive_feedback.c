@@ -614,12 +614,12 @@ static void zaf_apply_animation(const struct zaf_event_info *cfg) {
 
 /* Motor GPIOs belong to the shared bounded driver, never to this renderer. */
 static void zaf_feedback_step_work_fn(struct k_work *work) { ARG_UNUSED(work); }
-static void zaf_trigger_feedback(const uint16_t *pattern, const uint8_t len) {
+static void zaf_trigger_feedback_priority(const uint16_t *pattern, const uint8_t len, uint8_t priority) {
     if (!zaf_config.feedback_enabled || !len ||
         len > CONFIG_ZMK_ADAPTIVE_FEEDBACK_FEEDBACK_PATTERN_MAX_LEN) return;
     int copied[CONFIG_ZMK_ADAPTIVE_FEEDBACK_FEEDBACK_PATTERN_MAX_LEN];
     for (uint8_t i = 0; i < len; i++) copied[i] = pattern[i];
-    fbc_trigger_pattern(copied, len);
+    fbc_trigger_pattern_priority(copied, len, priority);
 }
 
 extern struct k_timer zaf_timer;
@@ -1018,7 +1018,7 @@ static int zaf_init(void) {
 
 SYS_INIT(zaf_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 
-int zaf_on(void) {
+static int zaf_on_locked(void) {
     if (!zaf_state.initialized) {
         return -EAGAIN;
     }
@@ -1038,7 +1038,7 @@ int zaf_on(void) {
     return zaf_save_state();
 }
 
-int zaf_off(void) {
+static int zaf_off_locked(void) {
     if (!zaf_state.initialized) {
         return -EAGAIN;
     }
@@ -1056,6 +1056,19 @@ int zaf_off(void) {
 
     k_work_submit_to_queue(zmk_workqueue_lowprio_work_q(), &zaf_off_work);
     return zaf_save_state();
+}
+
+int zaf_on(void) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    int rc = zaf_on_locked();
+    k_mutex_unlock(&render_lock);
+    return rc;
+}
+int zaf_off(void) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    int rc = zaf_off_locked();
+    k_mutex_unlock(&render_lock);
+    return rc;
 }
 
 bool zaf_is_on(void) {
@@ -1273,7 +1286,7 @@ int zaf_clear_persisted(void) {
     return 0;
 }
 
-static void zaf_evt_activate(const struct zaf_event_info *ecfg, uint16_t *ticks_out) {
+static void zaf_evt_activate_priority(const struct zaf_event_info *ecfg, uint16_t *ticks_out, uint8_t priority) {
     if (!zaf_state.initialized) {
         return;
     }
@@ -1290,7 +1303,11 @@ static void zaf_evt_activate(const struct zaf_event_info *ecfg, uint16_t *ticks_
             ecfg->flash_ease_in_ms, ecfg->flash_ease_in_fn,
             ecfg->flash_ease_out_ms, ecfg->flash_ease_out_fn);
     }
-    zaf_trigger_feedback(ecfg->feedback_pattern, ecfg->feedback_pattern_len);
+    zaf_trigger_feedback_priority(ecfg->feedback_pattern, ecfg->feedback_pattern_len, priority);
+}
+
+static void zaf_evt_activate(const struct zaf_event_info *ecfg, uint16_t *ticks_out) {
+    zaf_evt_activate_priority(ecfg, ticks_out, 1);
 }
 
 static int zaf_event_listener_locked(const zmk_event_t *eh) {
@@ -1321,7 +1338,7 @@ static int zaf_event_listener_locked(const zmk_event_t *eh) {
                 zaf_evt_activate(zaf_evt_eff_cfg(ZAF_EVTIDX_BATT_WARN, (uint8_t)i), &zaf_state.batt_warn_ticks[i]);
             }
             if (prev > crit_thresh[i] && cur <= crit_thresh[i]) {
-                zaf_evt_activate(zaf_evt_eff_cfg(ZAF_EVTIDX_BATT_CRIT, (uint8_t)i), &zaf_state.batt_crit_ticks[i]);
+                zaf_evt_activate_priority(zaf_evt_eff_cfg(ZAF_EVTIDX_BATT_CRIT, (uint8_t)i), &zaf_state.batt_crit_ticks[i], 2);
             }
         }
         zaf_kick_timer();
@@ -1429,7 +1446,10 @@ static int zaf_custom_event_trigger_locked(struct zaf_custom_event *evt) {
         return -EINVAL;
     }
     evt->pending = true;
-    zaf_evt_activate(&evt->info, &evt->ticks);
+    bool urgent = !strcmp(evt->name, "power-off-feedback") ||
+                  !strcmp(evt->name, "clear-current-bt-feedback") ||
+                  !strcmp(evt->name, "clear-all-bt-feedback");
+    zaf_evt_activate_priority(&evt->info, &evt->ticks, urgent ? 2 : 1);
     zaf_kick_timer();
     return 0;
 }
@@ -1516,7 +1536,7 @@ int zaf_error_set(const uint8_t slot_idx, const enum zaf_field field, const unio
     return zaf_save_evt_cfg();
 }
 
-int zaf_error_trigger(const uint8_t slot_idx) {
+static int zaf_error_trigger_locked(const uint8_t slot_idx) {
     if (!zaf_state.initialized) {
         return -EAGAIN;
     }
@@ -1534,9 +1554,16 @@ int zaf_error_trigger(const uint8_t slot_idx) {
 
     zaf_state.evts.rt_error_slots[slot_idx].cfg = *ecfg;
     zaf_state.evts.rt_error_slots[slot_idx].valid = true;
-    zaf_trigger_feedback(ecfg->feedback_pattern, ecfg->feedback_pattern_len);
+    zaf_trigger_feedback_priority(ecfg->feedback_pattern, ecfg->feedback_pattern_len, 2);
     zaf_kick_timer();
     return 0;
+}
+
+int zaf_error_trigger(const uint8_t slot_idx) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    int rc = zaf_error_trigger_locked(slot_idx);
+    k_mutex_unlock(&render_lock);
+    return rc;
 }
 
 static int zaf_error_clear_range(const uint8_t start, const uint8_t count) {

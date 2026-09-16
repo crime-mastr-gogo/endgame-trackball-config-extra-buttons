@@ -21,8 +21,15 @@ static int steps[MAX_STEPS];
 static uint8_t count, index, active_priority;
 static bool enabled, ready, active;
 static int64_t available_at;
+static int64_t due_at;
+K_THREAD_STACK_DEFINE(feedback_stack, 1024);
+static struct k_work_q feedback_queue;
 static void step(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(step_work, step);
+static void schedule_step(int delay_ms) {
+    due_at = k_uptime_get() + delay_ms;
+    k_work_reschedule_for_queue(&feedback_queue, &step_work, K_MSEC(delay_ms));
+}
 
 static void stop_locked(void) {
     gpio_pin_set_dt(&motor, 0);
@@ -35,12 +42,18 @@ static void stop_locked(void) {
 static void step(struct k_work *work) {
     ARG_UNUSED(work);
     k_mutex_lock(&feedback_lock, K_FOREVER);
-    if (!enabled || !active || index >= count) {
+    if (!enabled || !active) {
+        stop_locked();
+    } else if (k_uptime_get() < due_at) {
+        /* A previously running callback may have waited behind a preemption.
+         * It must not advance the replacement pattern ahead of its deadline. */
+        k_work_reschedule_for_queue(&feedback_queue, &step_work, K_MSEC(due_at - k_uptime_get()));
+    } else if (index >= count) {
         stop_locked();
     } else {
         int rc = gpio_pin_set_dt(&motor, (index % 2) == 0);
         if (rc < 0) stop_locked();
-        else k_work_reschedule(&step_work, K_MSEC(steps[index++]));
+        else schedule_step(steps[index++]);
     }
     k_mutex_unlock(&feedback_lock);
 }
@@ -71,7 +84,7 @@ int fbc_trigger_pattern_priority(const int *pattern, uint8_t length, uint8_t pri
         rc = gpio_pin_set_dt(&supply, 1);
         if (!rc) {
             active = true;
-            k_work_reschedule(&step_work, K_MSEC(5));
+            schedule_step(5);
         } else stop_locked();
     }
     k_mutex_unlock(&feedback_lock);
@@ -96,6 +109,7 @@ void fbc_stop(void) {
 }
 
 void fbc_set_enabled(bool value) {
+    /* May be called independently of LED state. */
     k_mutex_lock(&feedback_lock, K_FOREVER);
     enabled = value;
     if (!value && ready) {
@@ -112,11 +126,22 @@ bool fbc_is_active(void) {
     return result;
 }
 
+void fbc_cancel_status(void) {
+    k_mutex_lock(&feedback_lock, K_FOREVER);
+    if (active && active_priority == 0) {
+        k_work_cancel_delayable(&step_work);
+        stop_locked();
+    }
+    k_mutex_unlock(&feedback_lock);
+}
+
 static int init(void) {
     if (!gpio_is_ready_dt(&motor) || !gpio_is_ready_dt(&supply)) return -ENODEV;
     int rc = gpio_pin_configure_dt(&motor, GPIO_OUTPUT_INACTIVE);
     if (!rc) rc = gpio_pin_configure_dt(&supply, GPIO_OUTPUT_INACTIVE);
     ready = !rc;
+    if (ready) k_work_queue_start(&feedback_queue, feedback_stack,
+                                  K_THREAD_STACK_SIZEOF(feedback_stack), 5, NULL);
     /* Remains muted until persisted settings have been restored. */
     return rc;
 }

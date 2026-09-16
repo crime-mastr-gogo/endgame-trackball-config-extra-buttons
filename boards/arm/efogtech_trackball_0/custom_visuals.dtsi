@@ -57,18 +57,18 @@
         event-type = "custom";
         custom-event-name = "sensitivity-boundary";
         colors = [18 00 00 18 0c 00 18 18 00 00 18 00 00 18 18 00 00 18 0c 00 18];
-        animation = "flash";
-        flash-duration-ms = <500>;
-        flash-ease-out-ms = <150>;
+        animation = "blink";
+        flash-duration-ms = <1000>;
+        blink-on-ms = <140>; blink-off-ms = <1>;
         feedback-pattern = <150 50 150 50 150>;
     };
     custom_5 {
         event-type = "custom";
         custom-event-name = "sensitivity-reset";
         colors = [18 00 00 18 0c 00 18 18 00 00 18 00 00 18 18 00 00 18 0c 00 18];
-        animation = "flash";
-        flash-duration-ms = <500>;
-        flash-ease-out-ms = <150>;
+        animation = "blink";
+        flash-duration-ms = <1000>;
+        blink-on-ms = <140>; blink-off-ms = <1>;
         feedback-pattern = <150 50 150 50 150>;
     };
     custom_6 {

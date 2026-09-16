@@ -7,3 +7,4 @@ int fbc_trigger_pattern_priority(const int *pattern, uint8_t count, uint8_t prio
 bool fbc_is_active(void);
 void fbc_set_enabled(bool enabled);
 void fbc_stop(void);
+void fbc_cancel_status(void);
