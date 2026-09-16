@@ -405,8 +405,6 @@ static int cmd_backup(const struct shell *sh, const size_t argc, char **argv) {
     const uint32_t storage_size = 0x00008000;
 #ifdef CONFIG_LOG_DOMAIN_ID
     const uint32_t saved_level = log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, 0, LOG_LEVEL_NONE);
-#else
-    const uint32_t saved_level = -1;
 #endif
 
     shprint(sh, "");
@@ -455,8 +453,10 @@ SHELL_CMD_REGISTER(board, &sub_board, "Control the device", NULL);
 static const struct device *p1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
+#ifdef CONFIG_LOG_DOMAIN_ID
 static int16_t settings_log_source_id = -1;
 static uint32_t settings_log_saved_level;
+#endif
 
 static void set_3v3_en(const bool en) {
     gpio_pin_configure(p1, 0, GPIO_OUTPUT);
@@ -478,10 +478,12 @@ static void rgb_hw_check_work_handler(struct k_work *work) {
         zaf_set_rgb_not_supported();
     }
 
+#ifdef CONFIG_LOG_DOMAIN_ID
     if (settings_log_source_id >= 0) {
         log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, settings_log_saved_level);
         settings_log_source_id = -1;
     }
+#endif
 }
 
 static K_WORK_DELAYABLE_DEFINE(rgb_hw_check_work, rgb_hw_check_work_handler);
