@@ -17,6 +17,7 @@ class HardwareContract(unittest.TestCase):
         self.assertNotIn("zmk-behavior-follower", west)
         self.assertNotIn("CONFIG_EC11", defconfig)
         self.assertIn("CONFIG_ZMK_USB_LOGGING=n", defconfig)
+        self.assertIn("CONFIG_LOG=y", defconfig)
         self.assertNotIn("behaviors/follower.dtsi", encoders)
         self.assertNotIn("zmk-usb-logging", build)
         board_source = (BOARD / "efogtech_trackball_0.c").read_text()
