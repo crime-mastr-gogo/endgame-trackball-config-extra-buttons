@@ -1,4 +1,22 @@
 &adaptive_feedback {
+    status_usb {
+        event-type = "custom";
+        custom-event-name = "status-usb";
+        colors = [00 00 40];
+        animation = "flash";
+        flash-duration-ms = <1500>;
+        feedback-pattern = <600 150 600>;
+    };
+    status_esb {
+        event-type = "custom";
+        custom-event-name = "status-esb";
+        colors = [18 00 00 18 0c 00 18 18 00 00 18 00 00 18 18 00 00 18 0c 00 18];
+        animation = "blink";
+        blink-on-ms = <140>;
+        blink-off-ms = <1>;
+        flash-duration-ms = <1000>;
+        feedback-pattern = <600>;
+    };
     custom_0 {
         event-type = "custom";
         custom-event-name = "pointer-sensitivity-increased";

@@ -2,7 +2,8 @@
 .zmk/
 modules
 zephyr
-zmk
+/zmk/
+__pycache__/
 zmk-pmw3610-driver
 .vscode
 zmk-input-processor-mixer

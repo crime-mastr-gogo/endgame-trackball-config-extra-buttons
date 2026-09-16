@@ -35,6 +35,8 @@
 
 LOG_MODULE_REGISTER(zmk_adaptive_feedback, CONFIG_ZMK_LOG_LEVEL);
 static bool led_enabled;
+K_MUTEX_DEFINE(render_lock);
+static uint16_t layer_ticks = UINT16_MAX;
 
 static inline uint16_t zaf_ticks_from_ms(const uint32_t ms) {
     const int32_t tick = ZRC_GET("argb/tick", CONFIG_ZMK_ADAPTIVE_FEEDBACK_TICK_MS);
@@ -309,7 +311,7 @@ static const struct zaf_event_info *zaf_resolve(void) {
     const uint8_t layer = zaf_state.active_layer;
     if (layer < ZMK_KEYMAP_LAYERS_LEN) {
         const struct zaf_event_info *lcfg = zaf_evt_eff_cfg(ZAF_EVTIDX_LAYER, layer);
-        if (lcfg != NULL && zaf_event_is_persistent(ZAF_EVTIDX_LAYER, layer)) {
+        if (lcfg != NULL && (layer_ticks != UINT16_MAX || zaf_event_is_persistent(ZAF_EVTIDX_LAYER, layer))) {
             return lcfg;
         }
     }
@@ -635,12 +637,13 @@ static bool __noinline zaf_tick_decrement(uint16_t *ticks) {
     return false;
 }
 
-static void zaf_tick(struct k_work *work) {
+static void zaf_tick_locked(struct k_work *work) {
     if (!led_enabled) return;
     if (!zaf_state.initialized || !zaf_state.on) {
         return;
     }
 
+    zaf_tick_decrement(&layer_ticks);
     if (zaf_tick_decrement(&zaf_state.usb_event_ticks)) {
         zaf_tick_reset_blink();
     }
@@ -739,6 +742,11 @@ static void zaf_tick(struct k_work *work) {
     }
 }
 
+static void zaf_tick(struct k_work *work) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    zaf_tick_locked(work);
+    k_mutex_unlock(&render_lock);
+}
 K_WORK_DEFINE(zaf_tick_work, zaf_tick);
 
 static void zaf_timer_handler(struct k_timer *timer) {
@@ -751,13 +759,18 @@ static void zaf_timer_handler(struct k_timer *timer) {
 K_TIMER_DEFINE(zaf_timer, zaf_timer_handler, NULL);
 
 static void zaf_off_work_fn(struct k_work *work) {
-    zaf_clear_pixels();
-    led_strip_update_rgb(zaf_config.led_strip, zaf_pixels, zaf_config.chain_length);
+    k_mutex_lock(&render_lock, K_FOREVER);
+    if (!led_enabled || !zaf_state.on) {
+        zaf_clear_pixels();
+        led_strip_update_rgb(zaf_config.led_strip, zaf_pixels, zaf_config.chain_length);
+    }
+    k_mutex_unlock(&render_lock);
 }
 
 K_WORK_DEFINE(zaf_off_work, zaf_off_work_fn);
 
 void zaf_set_led_enabled(bool enabled) {
+    k_mutex_lock(&render_lock, K_FOREVER);
     led_enabled = enabled;
     if (!enabled) {
         k_timer_stop(&zaf_timer);
@@ -765,6 +778,7 @@ void zaf_set_led_enabled(bool enabled) {
     } else if (zaf_state.initialized && zaf_state.on) {
         k_timer_start(&zaf_timer, K_NO_WAIT, K_MSEC(CONFIG_ZMK_ADAPTIVE_FEEDBACK_TICK_MS));
     }
+    k_mutex_unlock(&render_lock);
 }
 
 static void zaf_kick_timer(void) {
@@ -806,59 +820,11 @@ static int zaf_save_custom_cfg(void) {
     return MIN(ret, 0);
 }
 
-static int zaf_settings_set(const char *name, const size_t len, const settings_read_cb read_cb, void *cb_arg) {
-    const char *next;
-
-    if (settings_name_steq(name, "state", &next) && !next) {
-        if (len != sizeof(struct zaf_persisted)) {
-            return -EINVAL;
-        }
-        struct zaf_persisted p;
-        const int rc = read_cb(cb_arg, &p, sizeof(p));
-        if (rc < 0) {
-            return rc;
-        }
-        zaf_state.on              = p.on;
-        zaf_state.override_active = p.override_active;
-        zaf_state.override_cfg    = p.override_cfg;
-        return 0;
-    }
-
-    static bool loaded_evtcfg = false;
-    if (settings_name_steq(name, "evtcfg", &next) && !next && !loaded_evtcfg) {
-        if (len != sizeof(struct zaf_evt_state)) {
-            LOG_WRN("config size mismatch (%zu vs %zu), ignoring",
-                    len, sizeof(struct zaf_evt_state));
-            return 0;
-        }
-        const int rc = read_cb(cb_arg, &zaf_state.evts, sizeof(zaf_state.evts));
-        if (rc < 0) {
-            return rc;
-        }
-        loaded_evtcfg = true;
-        return 0;
-    }
-
-    if (settings_name_steq(name, "ce", &next) && next) {
-        if (len != sizeof(struct zaf_event_info)) {
-            LOG_WRN("ce/%s size mismatch (%zu vs %zu), ignoring",
-                    next, len, sizeof(struct zaf_event_info));
-            return 0;
-        }
-        STRUCT_SECTION_FOREACH(zaf_custom_event, cevt) {
-            if (strcmp(next, cevt->name) == 0) {
-                struct zaf_event_info info;
-                const int rc = read_cb(cb_arg, &info, sizeof(info));
-                if (rc < 0) {
-                    return rc;
-                }
-                cevt->info = info;
-                return 0;
-            }
-        }
-        return -ENOENT;
-    }
-
+/* Compiled feedback definitions are authoritative in the clean firmware.
+ * Do not deserialize legacy packed event structures or shell overrides.
+ * User LED/vibration preferences are validated by ankur/v1 instead. */
+static int zaf_settings_set(const char *name, size_t len, settings_read_cb read, void *arg) {
+    ARG_UNUSED(name); ARG_UNUSED(len); ARG_UNUSED(read); ARG_UNUSED(arg);
     return -ENOENT;
 }
 
@@ -1327,7 +1293,7 @@ static void zaf_evt_activate(const struct zaf_event_info *ecfg, uint16_t *ticks_
     zaf_trigger_feedback(ecfg->feedback_pattern, ecfg->feedback_pattern_len);
 }
 
-static int zaf_event_listener(const zmk_event_t *eh) {
+static int zaf_event_listener_locked(const zmk_event_t *eh) {
     if (!zaf_state.initialized) {
         return ZMK_EV_EVENT_BUBBLE;
     }
@@ -1394,10 +1360,11 @@ static int zaf_event_listener(const zmk_event_t *eh) {
             if (i != 6 && zmk_keymap_layer_active(i)) { l = i; break; }
         }
         zaf_state.active_layer = l;
+        layer_ticks = UINT16_MAX;
         zaf_state.anim_step     = 0;
         zaf_state.color_idx    = 0;
         if (layer->state && l < ZMK_KEYMAP_LAYERS_LEN) {
-            zaf_evt_activate(zaf_evt_eff_cfg(ZAF_EVTIDX_LAYER, l), NULL);
+            zaf_evt_activate(zaf_evt_eff_cfg(ZAF_EVTIDX_LAYER, l), &layer_ticks);
         } else {
             zaf_tick_reset_blink();
         }
@@ -1438,6 +1405,12 @@ static int zaf_event_listener(const zmk_event_t *eh) {
     return ZMK_EV_EVENT_BUBBLE;
 }
 
+static int zaf_event_listener(const zmk_event_t *eh) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    int rc = zaf_event_listener_locked(eh);
+    k_mutex_unlock(&render_lock);
+    return rc;
+}
 ZMK_LISTENER(zaf, zaf_event_listener);
 ZMK_SUBSCRIPTION(zaf, zmk_battery_state_changed);
 ZMK_SUBSCRIPTION(zaf, zmk_activity_state_changed);
@@ -1448,7 +1421,7 @@ ZMK_SUBSCRIPTION(zaf, zmk_ble_active_profile_changed);
 ZMK_SUBSCRIPTION(zaf, zmk_studio_core_lock_state_changed);
 #endif
 
-int zaf_custom_event_trigger(struct zaf_custom_event *evt) {
+static int zaf_custom_event_trigger_locked(struct zaf_custom_event *evt) {
     if (!zaf_state.initialized) {
         return -EAGAIN;
     }
@@ -1459,6 +1432,13 @@ int zaf_custom_event_trigger(struct zaf_custom_event *evt) {
     zaf_evt_activate(&evt->info, &evt->ticks);
     zaf_kick_timer();
     return 0;
+}
+
+int zaf_custom_event_trigger(struct zaf_custom_event *evt) {
+    k_mutex_lock(&render_lock, K_FOREVER);
+    int rc = zaf_custom_event_trigger_locked(evt);
+    k_mutex_unlock(&render_lock);
+    return rc;
 }
 
 int zaf_custom_event_get(const struct zaf_custom_event *evt, struct zaf_event_info *out) {

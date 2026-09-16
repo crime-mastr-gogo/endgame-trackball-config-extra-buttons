@@ -52,6 +52,8 @@ EVENT(clear_current, "clear-current-bt-feedback");
 EVENT(clear_all, "clear-all-bt-feedback");
 EVENT(shutdown, "power-off-feedback");
 EVENT(status, "status-report");
+EVENT(status_usb, "status-usb");
+EVENT(status_esb, "status-esb");
 EVENT(drag_on, "drag-lock-on");
 EVENT(drag_off, "drag-lock-off");
 
@@ -125,19 +127,19 @@ K_WORK_DELAYABLE_DEFINE(power_work, power_work_fn);
 
 /* Tens use 260ms, units 60ms. <=20 levels => <=19 entries.
  * The shared service copies the stack pattern before returning. */
-static void report_number(unsigned number) {
+static void report_number(unsigned number, unsigned units_per_long) {
     int pattern[32];
     unsigned count = 0;
     number = MIN(number, 20);
-    for (unsigned i = 0; i < number / 10; i++) {
+    for (unsigned i = 0; i < number / units_per_long; i++) {
         pattern[count++] = 260; pattern[count++] = 180;
     }
-    for (unsigned i = 0; i < number % 10; i++) {
+    for (unsigned i = 0; i < number % units_per_long; i++) {
         pattern[count++] = 60; pattern[count++] = 75;
     }
     if (!count) { pattern[count++] = 600; }
     else --count; /* no trailing silence */
-    fbc_trigger_pattern(pattern, count);
+    fbc_trigger_pattern_priority(pattern, count, 0);
     zaf_custom_event_trigger(&status);
 }
 
@@ -172,15 +174,15 @@ static int execute_locked(unsigned action) {
             dragging = true; feedback = &drag_on;
         }
         break;
-    case REPORT_POINTER: report_number(state.pointer + 1); break;
-    case REPORT_TWIST: report_number(state.twist + 1); break;
+    case REPORT_POINTER: report_number(state.pointer + 1, 10); break;
+    case REPORT_TWIST: report_number(state.twist + 1, 10); break;
     case REPORT_SCROLL: feedback = state.standard ? &standard : &highres; break;
     case REPORT_CONNECTION:
-        if (zmk_usb_is_hid_ready()) report_number(0);
-        else if (zmk_esb_endpoint_is_active()) report_number(0);
-        else report_number(zmk_ble_active_profile_index() + 1);
+        if (zmk_esb_endpoint_is_active()) feedback = &status_esb;
+        else if (zmk_usb_is_hid_ready()) feedback = &status_usb;
+        else report_number(zmk_ble_active_profile_index() + 1, 10);
         break;
-    case REPORT_BATTERY: report_number(MIN(zmk_battery_state_of_charge(), 100) / 5); break;
+    case REPORT_BATTERY: report_number(MIN(zmk_battery_state_of_charge(), 100) / 5, 5); break;
     case CLEAR_CURRENT:
         release_drag(); zmk_ble_clear_bonds(); feedback = &clear_current; break;
     case CLEAR_ALL:
@@ -211,7 +213,7 @@ static int pressed(struct zmk_behavior_binding *binding, struct zmk_behavior_bin
     const struct control_config *cfg = dev->config;
     struct control_data *data = dev->data;
     if (!ankur_guarded(cfg->action)) return execute(cfg->action);
-    if (!data->held) {
+    if (!data->held || data->epoch != epoch) {
         data->held = true; data->pressed_at = e.timestamp;
         data->position = e.position; data->epoch = epoch;
     }

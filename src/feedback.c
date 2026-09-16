@@ -18,7 +18,7 @@ static const struct gpio_dt_spec motor = GPIO_DT_SPEC_GET(DT_NODELABEL(feedback_
 static const struct gpio_dt_spec supply = GPIO_DT_SPEC_GET(DT_NODELABEL(feedback_common), feedback_extra_gpios);
 K_MUTEX_DEFINE(feedback_lock);
 static int steps[MAX_STEPS];
-static uint8_t count, index;
+static uint8_t count, index, active_priority;
 static bool enabled, ready, active;
 static int64_t available_at;
 static void step(struct k_work *work);
@@ -45,8 +45,8 @@ static void step(struct k_work *work) {
     k_mutex_unlock(&feedback_lock);
 }
 
-int fbc_trigger_pattern(const int *pattern, uint8_t length) {
-    if (!pattern || !length || length > MAX_STEPS || k_is_in_isr()) return -EINVAL;
+int fbc_trigger_pattern_priority(const int *pattern, uint8_t length, uint8_t priority) {
+    if (!pattern || !length || length > MAX_STEPS || priority > 2 || k_is_in_isr()) return -EINVAL;
     unsigned total = 0;
     for (unsigned i = 0; i < length; i++) {
         if (pattern[i] < 1 || pattern[i] > MAX_PULSE_MS) return -EINVAL;
@@ -57,8 +57,14 @@ int fbc_trigger_pattern(const int *pattern, uint8_t length) {
     int rc = 0;
     if (!ready || !enabled) rc = -EACCES;
     /* Do not restart/extend a running pulse under repeated input. */
-    else if (active || k_uptime_get() < available_at) rc = -EBUSY;
+    else if ((active && priority <= active_priority) ||
+             (!active && priority < 2 && k_uptime_get() < available_at)) rc = -EBUSY;
     else {
+        if (active) {
+            k_work_cancel_delayable(&step_work);
+            stop_locked();
+        }
+        active_priority = priority;
         memcpy(steps, pattern, length * sizeof(steps[0]));
         count = length;
         index = 0;
@@ -70,6 +76,10 @@ int fbc_trigger_pattern(const int *pattern, uint8_t length) {
     }
     k_mutex_unlock(&feedback_lock);
     return rc;
+}
+
+int fbc_trigger_pattern(const int *pattern, uint8_t length) {
+    return fbc_trigger_pattern_priority(pattern, length, 1);
 }
 
 int fbc_trigger(uint32_t duration) {
