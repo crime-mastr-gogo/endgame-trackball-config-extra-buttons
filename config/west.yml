@@ -19,9 +19,6 @@ manifest:
     - name: zmk-report-rate-limit
       remote: efogdev
       revision: "20e0742"
-    - name: zmk-ec11-ish-driver
-      remote: efogdev
-      revision: "7b0828b"
     - name: zmk-auto-hold
       remote: efogdev
       revision: "e3b649f"

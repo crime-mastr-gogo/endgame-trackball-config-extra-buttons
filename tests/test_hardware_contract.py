@@ -8,6 +8,15 @@ BOARD = ROOT / "boards/arm/efogtech_trackball_0"
 
 
 class HardwareContract(unittest.TestCase):
+    def test_no_encoder_build_dependencies(self):
+        self.assertNotIn("zmk-ec11-ish-driver", (ROOT / "config/west.yml").read_text())
+        self.assertNotIn("CONFIG_EC11", (BOARD / "efogtech_trackball_0_defconfig").read_text())
+        self.assertNotIn("config EC11", (BOARD / "Kconfig.defconfig").read_text())
+        self.assertNotIn("behavior-sensor-rotate", (BOARD / "behaviors_macros.dtsi").read_text())
+        config = (ROOT / "config/efogtech_trackball_0.conf").read_text()
+        self.assertNotIn("CONFIG_ZMK_KSCAN_COMPOSITE_DRIVER=", config)
+        self.assertNotIn("CONFIG_EC11", config)
+
     def test_layout(self):
         text = (BOARD / "buttons.dtsi").read_text()
         rows = [int(x) for x in re.findall(r"RC\((\d+), 0\)", text)]
