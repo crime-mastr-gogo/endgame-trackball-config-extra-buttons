@@ -1,0 +1,1 @@
+target_sources_ifdef(CONFIG_ZMK_ADAPTIVE_FEEDBACK_SHELL app PRIVATE adaptive_feedback_shell.c)

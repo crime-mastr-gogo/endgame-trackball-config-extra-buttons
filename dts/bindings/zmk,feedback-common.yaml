@@ -1,0 +1,9 @@
+description: Shared feedback GPIO singleton
+
+compatible: "zmk,feedback-common"
+
+properties:
+  feedback-gpios:
+    type: phandle-array
+  feedback-extra-gpios:
+    type: phandle-array

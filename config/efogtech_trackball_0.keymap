@@ -11,117 +11,180 @@
 #define LAYER_DEFAULT      0
 #define LAYER_EXTRAS       1
 #define LAYER_DEVICE       2
-#define LAYER_SCROLL       3
-#define LAYER_SNIPE        4
-#define LAYER_USER         5
+#define LAYER_STATUS       3
+#define LAYER_FEEDBACK     4
+#define LAYER_SCROLL       5
+#define LAYER_STANDARD_SCROLL 6
+#define LAYER_SNIPE        7
 #endif
 
 / {
+
 	keymap {
 		compatible = "zmk,keymap";
 
 		default_layer {
 			display-name = "Default";
 			bindings = <
-                &ltmkp LAYER_SNIPE ENTER
-                &ltmkp LAYER_SCROLL ESC
-                &mkp MCLK
-                &cdch LAYER_SCROLL 0
-                &mkp LCLK
-                &mkp RCLK
-                &ltm LAYER_EXTRAS MB4
-                &ltm LAYER_DEVICE MB5
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &kp F13 &kp F14 &kp F15 &kp F16 &kp F17 &kp F18 &kp F19
-            >;
+				// Original eight buttons
+				&ltmkp LAYER_SNIPE LC(C)    &ltmkp LAYER_SCROLL LC(V)
+				&kp DELETE                  &kp ENTER
+				&mkp LCLK                   &mkp RCLK
+				&mkp MCLK                   &kp LG(LS(S))
+
+				/*
+				 * Internal order:
+				 * Left A, Left B, Right A, Right B, IO1, IO2, IO3
+				 *
+				 * Studio displays Left B before Left A; logical order stays A, B.
+				 */
+				&drag_lock                  &mo LAYER_EXTRAS
+				&none                       &none
+				&mo LAYER_FEEDBACK          &mo LAYER_STATUS
+				&mo LAYER_DEVICE
+			>;
 		};
 
 		layer1 {
-			display-name = "Extras";
+			display-name = "Control Settings";
 			bindings = <
-                &bst_copy
-                &bst_paste
-                &bst_cut
-                &bst_undo
-                &bst_undo
-                &bst_copy
-                &trans
-                &bst_paste
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &trans &trans &trans &trans &trans &trans &trans
-            >;
+				// Original eight buttons
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+
+								// Left A, Left B, Right A, Right B
+				&twist_sens_up_fb            &trans
+				&twist_sens_down_fb         &bt BT_NXT
+
+				// IO1, IO2 and IO3
+				&bt BT_PRV                  &ptr_sens_up_fb
+				&ptr_sens_down_fb
+			>;
 		};
 
 		layer2 {
-			display-name = "Device";
+			display-name = "Device Settings";
 			bindings = <
-                &mui_or_dgl
-                &bt BT_CLR
-                &bst_tog ZBS_TOG
-                &bt BT_NXT
-                &af_toggle AF_TOG
-                &bt BT_PRV
-                &studio_unlock
-                &trans
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &trans &trans &trans &trans &trans &trans &trans
-            >;
+				// Original eight buttons
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+				&trans                      &trans
+
+				// Left A, Left B, Right A, Right B
+				&studio_unlock                  &hold_power_off
+				&scroll_mode_toggle         &hold_clear_all_bt
+
+			        // IO1, IO2 and IO3
+                                &hold_clear_current_bt      &hold_sens_reset
+                                &trans
+			>;
 		};
 
 		layer3 {
-			display-name = "Scroll";
+			display-name = "Status Report";
 			bindings = <
-                &trans
-                &trans
-                &trans
-                &scrlsens P2SM_INC 1
-                &rrl 1
-                &scrlsens P2SM_DEC 1
-                &sens P2SM_DEC 1
-                &sens P2SM_INC 1
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &trans &trans &trans &trans &trans &trans &trans
-            >;
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A: twist; Left B: Bluetooth
+				&report_twist_status    &report_bluetooth_status
+				// Right A: pointer; Right B: scroll mode
+				&report_pointer_status    &report_scroll_status
+
+				// IO1: battery charge; IO2 and IO3 inherit their holds
+				&report_battery_status    &trans
+				&trans
+			>;
 		};
 
 		layer4 {
-			display-name = "Snipe";
+			display-name = "Feedback Controls";
 			bindings = <
-                &trans
-                &soft_off
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &trans &trans &trans &trans &trans &trans &trans
-            >;
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A: vibration toggle; Left B: LED toggle
+				&toggle_vibration    &toggle_led
+				&trans                &trans
+
+				&trans    &trans
+				&trans
+			>;
 		};
 
 		layer5 {
-			display-name = "User";
+			display-name = "Drag Scroll";
 			bindings = <
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                &trans
-                // Left A, Left B, Right A, Right B, IO1, IO2, IO3
-                &trans &trans &trans &trans &trans &trans &trans
-            >;
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
+
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
 		};
+
+		layer6 {
+			display-name = "Scroll Mode Switch";
+			bindings = <
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
+
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
+		};
+
+		layer7 {
+			display-name = "Fine Cursor Movement";
+			bindings = <
+				// Original eight buttons
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+				&trans    &trans
+
+				// Left A, Left B, Right A, Right B
+				&trans    &trans
+				&trans    &trans
+
+				// IO1, IO2 and IO3
+				&trans    &trans
+				&trans
+			>;
+		};
+
 	};
 
-	trackball {
+		trackball {
+		// Default mode: high-resolution twist scrolling
 		input-processors = <&zip_bistable_twist_scaler>,
 						   <&zip_pointer_accel>, <&zip_scroll_accel>, <&zip_rotate_pointer>,
-		                   <&esb_ip>, <&zip_ble_report_rate_limit>;
+						   <&esb_ip>, <&zip_ble_report_rate_limit>;
 
+		// Existing drag-scroll layer takes first priority
 		scroll {
 			layers = <LAYER_SCROLL>;
 			input-processors = <&zip_bistable_scroll_xy_scaler>, <&zip_axis_clamper>,
@@ -130,9 +193,19 @@
 							   <&esb_ip>, <&zip_ble_report_rate_limit>;
 		};
 
+		// Existing snipe layer takes second priority
 		snipe {
 			layers = <LAYER_SNIPE>;
 			input-processors = <&zip_bistable_snipe_scaler>, <&zip_rotate_pointer>,
+							   <&esb_ip>, <&zip_ble_report_rate_limit>;
+		};
+
+		// Toggled mode: standard full-notch twist scrolling
+		standard_scroll {
+			layers = <LAYER_STANDARD_SCROLL>;
+			input-processors = <&zip_bistable_twist_scaler>,
+							   <&zip_twist_full_notch_scaler 16 1>,
+							   <&zip_pointer_accel>, <&zip_scroll_accel>, <&zip_rotate_pointer>,
 							   <&esb_ip>, <&zip_ble_report_rate_limit>;
 		};
 	};

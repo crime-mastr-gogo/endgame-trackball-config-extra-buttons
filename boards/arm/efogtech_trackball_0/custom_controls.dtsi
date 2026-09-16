@@ -1,0 +1,106 @@
+/ {
+    behaviors {
+        ptr_sens_up_fb: ptr_sens_up_fb {
+            compatible = "ankur,control";
+            display-name = "ptr sens up fb";
+            #binding-cells = <0>;
+            action = <0>;
+        };
+        ptr_sens_down_fb: ptr_sens_down_fb {
+            compatible = "ankur,control";
+            display-name = "ptr sens down fb";
+            #binding-cells = <0>;
+            action = <1>;
+        };
+        twist_sens_up_fb: twist_sens_up_fb {
+            compatible = "ankur,control";
+            display-name = "twist sens up fb";
+            #binding-cells = <0>;
+            action = <2>;
+        };
+        twist_sens_down_fb: twist_sens_down_fb {
+            compatible = "ankur,control";
+            display-name = "twist sens down fb";
+            #binding-cells = <0>;
+            action = <3>;
+        };
+        scroll_mode_toggle: scroll_mode_toggle {
+            compatible = "ankur,control";
+            display-name = "scroll mode toggle";
+            #binding-cells = <0>;
+            action = <4>;
+        };
+        drag_lock: drag_lock {
+            compatible = "ankur,control";
+            display-name = "drag lock";
+            #binding-cells = <0>;
+            action = <5>;
+        };
+        report_pointer_status: report_pointer_status {
+            compatible = "ankur,control";
+            display-name = "report pointer status";
+            #binding-cells = <0>;
+            action = <6>;
+        };
+        report_twist_status: report_twist_status {
+            compatible = "ankur,control";
+            display-name = "report twist status";
+            #binding-cells = <0>;
+            action = <7>;
+        };
+        report_bluetooth_status: report_bluetooth_status {
+            compatible = "ankur,control";
+            display-name = "report bluetooth status";
+            #binding-cells = <0>;
+            action = <8>;
+        };
+        report_scroll_status: report_scroll_status {
+            compatible = "ankur,control";
+            display-name = "report scroll status";
+            #binding-cells = <0>;
+            action = <9>;
+        };
+        report_battery_status: report_battery_status {
+            compatible = "ankur,control";
+            display-name = "report battery status";
+            #binding-cells = <0>;
+            action = <10>;
+        };
+        toggle_led: toggle_led {
+            compatible = "ankur,control";
+            display-name = "toggle led";
+            #binding-cells = <0>;
+            action = <11>;
+        };
+        toggle_vibration: toggle_vibration {
+            compatible = "ankur,control";
+            display-name = "toggle vibration";
+            #binding-cells = <0>;
+            action = <12>;
+        };
+        hold_sens_reset: hold_sens_reset {
+            compatible = "ankur,control";
+            display-name = "hold sens reset";
+            #binding-cells = <0>;
+            action = <13>;
+        };
+        hold_clear_current_bt: hold_clear_current_bt {
+            compatible = "ankur,control";
+            display-name = "hold clear current bt";
+            #binding-cells = <0>;
+            action = <14>;
+        };
+        hold_clear_all_bt: hold_clear_all_bt {
+            compatible = "ankur,control";
+            display-name = "hold clear all bt";
+            #binding-cells = <0>;
+            action = <15>;
+        };
+        hold_power_off: hold_power_off {
+            compatible = "ankur,control";
+            display-name = "hold power off";
+            #binding-cells = <0>;
+            action = <16>;
+        };
+    };
+};

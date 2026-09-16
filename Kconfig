@@ -1,0 +1,5 @@
+rsource "vendor/adaptive-feedback/Kconfig"
+config ZMK_FEEDBACK_COMMON
+    bool "Bounded shared vibration driver"
+    default y
+    depends on GPIO

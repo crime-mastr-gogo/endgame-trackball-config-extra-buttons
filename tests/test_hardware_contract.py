@@ -26,7 +26,7 @@ class HardwareContract(unittest.TestCase):
     def test_keymap(self):
         text = (ROOT / "config/efogtech_trackball_0.keymap").read_text()
         bindings = re.findall(r"bindings = <(.*?)>;", text, re.S)
-        self.assertEqual(len(bindings), 6)
+        self.assertEqual(len(bindings), 8)
         for layer in bindings:
             self.assertEqual(layer.count("&"), 15)
         self.assertNotIn("DECLARE_ENCODERS", text)

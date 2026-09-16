@@ -1,0 +1,84 @@
+config ZMK_ADAPTIVE_FEEDBACK
+    bool "Adaptive Feedback"
+    select LED_STRIP
+    default y
+
+if ZMK_ADAPTIVE_FEEDBACK
+
+config ZMK_ADAPTIVE_FEEDBACK_MAX_COLORS
+    int "Maximum number of colors per event entry"
+    default 4
+    range 1 16
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_LEVEL_COUNT
+    int "Number of battery level entries"
+    default 3
+    range 1 10
+
+config ZMK_ADAPTIVE_FEEDBACK_MAX_ERROR_SLOTS
+    int "Maximum number of error message slots"
+    default 4
+    range 1 32
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_WARN_THRESH_1
+    int "Battery warning threshold 1 (%)"
+    default 30
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_WARN_THRESH_2
+    int "Battery warning threshold 2 (%)"
+    default 25
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_WARN_THRESH_3
+    int "Battery warning threshold 3 (%)"
+    default 20
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_CRIT_THRESH_1
+    int "Battery critical threshold 1 (%)"
+    default 15
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_CRIT_THRESH_2
+    int "Battery critical threshold 2 (%)"
+    default 10
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BATT_CRIT_THRESH_3
+    int "Battery critical threshold 3 (%)"
+    default 5
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_TICK_MS
+    int "Animation tick interval (msec)"
+    default 25
+    range 10 500
+
+config ZMK_ADAPTIVE_FEEDBACK_BRIGHTNESS
+    int "Global brightness (0-100%)"
+    default 100
+    range 0 100
+
+config ZMK_ADAPTIVE_FEEDBACK_BREATHE_DEFAULT_MS
+    int "Default breathe animation cycle duration in milliseconds"
+    default 3000
+    range 100 10000
+
+config ZMK_ADAPTIVE_FEEDBACK_FEEDBACK_PATTERN_MAX_LEN
+    int "Maximum number of steps in a feedback pattern"
+    default 4
+    range 1 32
+
+config ADAPTIVE_FEEDBACK_MAX_BT_DEVICES
+    int "Maximum number of BLE profile slots tracked by adaptive feedback"
+    default 5
+    range 1 16
+    help
+      Decoupled from CONFIG_BT_MAX_PAIRED so the feedback module can size
+      its per-profile state independently of the BLE stack's bond table.
+
+endif
+
+rsource "shell/Kconfig"
+rsource "behaviors/Kconfig"

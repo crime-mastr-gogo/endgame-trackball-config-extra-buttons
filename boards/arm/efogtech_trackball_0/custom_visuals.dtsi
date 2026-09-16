@@ -1,0 +1,128 @@
+&adaptive_feedback {
+    custom_0 {
+        event-type = "custom";
+        custom-event-name = "pointer-sensitivity-increased";
+        colors = [00 80 00];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+    custom_1 {
+        event-type = "custom";
+        custom-event-name = "pointer-sensitivity-decreased";
+        colors = [80 40 00];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+    custom_2 {
+        event-type = "custom";
+        custom-event-name = "twist-sensitivity-increased";
+        colors = [00 00 80];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+    custom_3 {
+        event-type = "custom";
+        custom-event-name = "twist-sensitivity-decreased";
+        colors = [80 80 00];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+    custom_4 {
+        event-type = "custom";
+        custom-event-name = "sensitivity-boundary";
+        colors = [18 00 00 18 0c 00 18 18 00 00 18 00 00 18 18 00 00 18 0c 00 18];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <150 50 150 50 150>;
+    };
+    custom_5 {
+        event-type = "custom";
+        custom-event-name = "sensitivity-reset";
+        colors = [18 00 00 18 0c 00 18 18 00 00 18 00 00 18 18 00 00 18 0c 00 18];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <150 50 150 50 150>;
+    };
+    custom_6 {
+        event-type = "custom";
+        custom-event-name = "standard-scroll-selected";
+        colors = [80 00 00];
+        animation = "blink";
+        flash-duration-ms = <600>;
+        blink-on-ms = <100>; blink-off-ms = <100>;
+        feedback-pattern = <150 50 150 50 150>;
+    };
+    custom_7 {
+        event-type = "custom";
+        custom-event-name = "high-res-scroll-selected";
+        colors = [00 80 00];
+        animation = "blink";
+        flash-duration-ms = <600>;
+        blink-on-ms = <100>; blink-off-ms = <100>;
+        feedback-pattern = <150 50 150 50 150>;
+    };
+    custom_8 {
+        event-type = "custom";
+        custom-event-name = "clear-current-bt-feedback";
+        colors = [80 40 00];
+        animation = "blink";
+        flash-duration-ms = <600>;
+        blink-on-ms = <100>; blink-off-ms = <100>;
+        feedback-pattern = <150 50 150 50 150>;
+    };
+    custom_9 {
+        event-type = "custom";
+        custom-event-name = "clear-all-bt-feedback";
+        colors = [80 00 00];
+        animation = "blink";
+        flash-duration-ms = <600>;
+        blink-on-ms = <100>; blink-off-ms = <100>;
+        feedback-pattern = <250 50 250 50 250>;
+    };
+    custom_10 {
+        event-type = "custom";
+        custom-event-name = "power-off-feedback";
+        colors = [80 00 00];
+        animation = "flash";
+        flash-duration-ms = <300>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <250>;
+    };
+    custom_11 {
+        event-type = "custom";
+        custom-event-name = "status-report";
+        colors = [18 18 18];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        
+    };
+    custom_12 {
+        event-type = "custom";
+        custom-event-name = "drag-lock-on";
+        colors = [00 40 40];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+    custom_13 {
+        event-type = "custom";
+        custom-event-name = "drag-lock-off";
+        colors = [40 20 00];
+        animation = "flash";
+        flash-duration-ms = <500>;
+        flash-ease-out-ms = <150>;
+        feedback-pattern = <100>;
+    };
+};

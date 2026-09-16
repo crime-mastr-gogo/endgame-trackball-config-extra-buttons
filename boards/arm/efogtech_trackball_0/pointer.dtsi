@@ -24,12 +24,16 @@
 	sensor1-pos = [31 4B 2D];  // X Y Z
 	sensor2-pos = [C1 3C 2D];
 
-	feedback-gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
-	feedback-extra-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
-	twist-feedback-delay = <5>;
+	// Motor feedback is owned exclusively by src/feedback.c.
 };
 
 / {
+    zip_twist_full_notch_scaler: zip_twist_full_notch_scaler {
+        compatible = "zmk,input-processor-scaler";
+        #input-processor-cells = <2>;
+        type = <INPUT_EV_REL>;
+        codes = <INPUT_REL_WHEEL INPUT_REL_HWHEEL>;
+    };
 	zip_dragscroll_accel: zip_dragscroll_accel {
 		compatible = "zmk,accel-curve";
 		#input-processor-cells = <0>;

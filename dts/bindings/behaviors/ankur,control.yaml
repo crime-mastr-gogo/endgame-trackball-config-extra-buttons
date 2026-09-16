@@ -1,0 +1,8 @@
+description: Endgame control with bounded settings and built-in destructive-action guard
+compatible: "ankur,control"
+include: zero_param.yaml
+properties:
+  action:
+    type: int
+    required: true
+    enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]

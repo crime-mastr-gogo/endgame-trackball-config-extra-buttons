@@ -1,0 +1,193 @@
+description: ZMK Adaptive Feedback controller
+
+compatible: "zmk,adaptive-feedback"
+
+properties:
+  led-strip:
+    type: phandle
+    required: true
+
+  chain-length:
+    type: int
+    required: true
+
+  error-slots:
+    type: int
+
+  error-slots-reverse:
+    type: boolean
+    description: >
+      When set, error sections are allocated from the end of the chain
+      (slot 0 is at the end, slot N is at the beginning).
+
+  ext-power:
+    type: phandle
+    required: false
+
+  feedback-enabled:
+    type: boolean
+
+  feedback-gpios:
+    type: phandle-array
+    required: false
+
+  feedback-extra-gpios:
+    type: phandle-array
+    required: false
+
+  feedback-delay:
+    type: int
+    default: 0
+    description: >
+      Delay in milliseconds between enabling ext-power / feedback-extra-gpios
+      and actually triggering the feedback GPIO.
+
+child-binding:
+  description: Per-event LED configuration
+
+  properties:
+    label:
+      type: string
+
+    event-type:
+      type: string
+      required: true
+      enum:
+        - "layer"
+        - "batt-warn"
+        - "batt-crit"
+        - "usb-conn"
+        - "usb-disconn"
+        - "ble-profile"
+        - "idle"
+        - "no-endpoint"
+        - "studio-unlock"
+        - "studio-lock"
+        - "custom"
+        - "error"
+
+    custom-event-name:
+      type: string
+      description: >
+        Name of the custom event to configure (must match a ZAF_CUSTOM_EVENT_DEFINE name).
+        Only used when event-type is "custom".
+
+    layer-index:
+      type: int
+      default: 0
+
+    battery-level:
+      type: int
+      default: 1
+
+    ble-profile-index:
+      type: int
+      default: 0
+      description: >
+        BLE profile index (0-based). Only used when event-type is "ble-profile".
+
+    error-slot-index:
+      type: int
+      default: 0
+      description: >
+        Error slot index (0-based). Only used when event-type is "error".
+        Selects which error slot to configure.
+
+    colors:
+      type: uint8-array
+      required: true
+
+    persistent:
+      type: boolean
+
+    headless:
+      type: boolean
+      description: >
+        When set, this event is excluded from shell status output.
+
+    animation:
+      type: string
+      default: "solid"
+      enum:
+        - "solid"
+        - "blink"
+        - "breathe"
+        - "flash"
+
+    blink-on-ms:
+      type: int
+      default: 500
+
+    blink-off-ms:
+      type: int
+      default: 500
+
+    flash-duration-ms:
+      type: int
+      default: 300
+
+    flash-ease-in-ms:
+      type: int
+      default: 0
+      description: >
+        Duration of the fade-in easing phase at the start of the flash (ms).
+        0 means the LED turns ON instantly (default).
+
+    flash-ease-in-fn:
+      type: string
+      default: "linear"
+      enum:
+        - "linear"
+        - "quad-in"
+        - "quad-out"
+        - "quad-in-out"
+        - "cubic-in"
+        - "cubic-out"
+        - "cubic-in-out"
+        - "quart-in"
+        - "quart-out"
+        - "quart-in-out"
+        - "expo-in"
+        - "expo-out"
+        - "bounce-out"
+        - "bounce-in"
+      description: Easing curve applied during the flash fade-in phase.
+
+    flash-ease-out-ms:
+      type: int
+      default: 0
+      description: >
+        Duration of the fade-out easing phase at the end of the flash (ms).
+        0 means the LED turns OFF instantly (default).
+
+    flash-ease-out-fn:
+      type: string
+      default: "linear"
+      enum:
+        - "linear"
+        - "quad-in"
+        - "quad-out"
+        - "quad-in-out"
+        - "cubic-in"
+        - "cubic-out"
+        - "cubic-in-out"
+        - "quart-in"
+        - "quart-out"
+        - "quart-in-out"
+        - "expo-in"
+        - "expo-out"
+        - "bounce-out"
+        - "bounce-in"
+      description: Easing curve applied during the flash fade-out phase.
+
+    feedback-pattern:
+      type: array
+      description: >
+        Feedback pattern: alternating ON/OFF durations in milliseconds.
+
+    breathe-duration-ms:
+      type: int
+      default: 3000
+      description: >
+        Duration of a single breathe cycle in milliseconds.
+        Only used when animation is "breathe".
