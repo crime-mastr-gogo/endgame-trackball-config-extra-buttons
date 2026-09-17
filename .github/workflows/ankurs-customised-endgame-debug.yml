@@ -1,4 +1,5 @@
-name: ankurs-customised-endgame-debug
+name: ankurs customised endgame firmware debug
+run-name: ankurs customised endgame firmware debug
 
 on:
   push:

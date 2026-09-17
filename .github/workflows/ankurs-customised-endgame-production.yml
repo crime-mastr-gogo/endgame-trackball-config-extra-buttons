@@ -1,4 +1,5 @@
-name: ankurs-customised-endgame-production
+name: ankurs customised endgame firmware production
+run-name: ankurs customised endgame firmware production
 
 on:
   push:
