@@ -478,10 +478,12 @@ static void rgb_hw_check_work_handler(struct k_work *work) {
      * probe or disconnect them: kscan owns them for the entire device lifetime. */
     rgb_supported = true;
 
+#ifdef CONFIG_LOG_DOMAIN_ID
     if (settings_log_source_id >= 0) {
         log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, settings_log_saved_level);
         settings_log_source_id = -1;
     }
+#endif
 }
 
 static K_WORK_DELAYABLE_DEFINE(rgb_hw_check_work, rgb_hw_check_work_handler);
