@@ -1,9 +1,3 @@
-.west
-.zmk/
-modules
-zephyr
-zmk
-zmk-pmw3610-driver
-.vscode
-zmk-input-processor-mixer
-zmk-pointer-2s-mixer
+__pycache__/
+*.py[cod]
+

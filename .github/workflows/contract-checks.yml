@@ -1,0 +1,16 @@
+name: Ankur firmware contract checks
+on:
+  push:
+    branches: [ankurs-customised-endgame-firmware]
+  pull_request:
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify GPIO ownership and layout
+        run: python3 -m unittest discover -s tests -v
+      - name: Verify arithmetic, preferences and feedback policy
+        run: |
+          gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined,address -Iinclude tests/test_policy.c -o /tmp/ankur-policy-test
+          /tmp/ankur-policy-test

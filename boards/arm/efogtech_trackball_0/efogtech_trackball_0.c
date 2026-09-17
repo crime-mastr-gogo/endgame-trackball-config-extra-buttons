@@ -26,7 +26,6 @@
 #include "zmk/settings.h"
 #include "zmk/keymap.h"
 #include "zmk/studio/core.h"
-#include "zmk_adaptive_feedback/adaptive_feedback.h"
 #include "zmk_esb/endpoint.h"
 
 #define DT_DRV_COMPAT zmk_endgame
@@ -455,7 +454,6 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_board,
 SHELL_CMD_REGISTER(board, &sub_board, "Control the device", NULL);
 #endif
 
-static const struct device *p0 = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 static const struct device *p1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
@@ -472,30 +470,13 @@ static void set_rgb_en(const bool en) {
     gpio_pin_set(p1, 3, en);
 }
 
-static void set_bl_en(const bool en) {
-    gpio_pin_configure(p0, 20, GPIO_OUTPUT);
-    gpio_pin_set(p0, 20, en);
-}
-
 static void rgb_hw_check_work_handler(struct k_work *work) {
     settings_load_subtree("board/rgb");
 
-    if (rgb_override) {
-        rgb_supported = true;
-    } else {
-        gpio_pin_configure(p0, 11, GPIO_INPUT | GPIO_PULL_DOWN);
-        gpio_pin_configure(p0, 15, GPIO_INPUT | GPIO_PULL_DOWN);
-
-        if (gpio_pin_get(p0, 11) && gpio_pin_get(p0, 15)) {
-            zaf_set_rgb_not_supported();
-            LOG_WRN("RGB not supported on this hardware!");
-        } else {
-            rgb_supported = true;
-        }
-
-        gpio_pin_configure(p0, 11, GPIO_DISCONNECTED);
-        gpio_pin_configure(p0, 15, GPIO_DISCONNECTED);
-    }
+    /* This confirmed RGB-equipped PCB uses IO1/IO2 as keys. The upstream
+     * hardware probe reconfigured those pins after kscan initialization. Never
+     * probe or disconnect them: kscan owns them for the entire device lifetime. */
+    rgb_supported = true;
 
     if (settings_log_source_id >= 0) {
         log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, settings_log_saved_level);
@@ -511,7 +492,6 @@ static int pinmux_efgtch_trckbl_init(void) {
 
     set_3v3_en(false);
     set_rgb_en(false);
-    set_bl_en(false);
 
 #ifdef CONFIG_LOG_DOMAIN_ID
     const uint32_t src_cnt = log_src_cnt_get(CONFIG_LOG_DOMAIN_ID);

@@ -27,12 +27,19 @@
         , <&btns 6 (GPIO_ACTIVE_LOW)>
         , <&btns 4 (GPIO_ACTIVE_LOW)>
         , <&btns 5 (GPIO_ACTIVE_LOW)>
+        , <&gpio0 17 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio0 16 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio1 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio1 9 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio0 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio0 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+        , <&gpio0 20 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
         ;
     };
 
     default_transform: keymap_transform_0 {
         compatible = "zmk,matrix-transform";
-        rows = <12>;
+        rows = <15>;
         columns = <1>;
         map =
             <
@@ -42,6 +49,7 @@
                 RC(6, 0)  RC(7, 0)
                 RC(8, 0)  RC(9, 0)
                 RC(10, 0) RC(11, 0)
+                RC(12, 0) RC(13, 0) RC(14, 0)
             >;
     };
 
@@ -62,11 +70,13 @@
         , <&key_physical_attrs 200   150   275   700   0    8    8  >
         , <&key_physical_attrs 200   150   525   700   0    8    8  >
 
-        , <&key_physical_attrs 35    100   15    750   0    8    8  >
-        , <&key_physical_attrs 35    100   950   750   0    8    8  >
-
-        , <&key_physical_attrs 100   35    65    850   0    8    8  >
-        , <&key_physical_attrs 100   35    835   850   0    8    8  >
+        , <&key_physical_attrs 100   100   50    950   0    0    0  >
+        , <&key_physical_attrs 100   100   180   950   0    0    0  >
+        , <&key_physical_attrs 100   100   310   950   0    0    0  >
+        , <&key_physical_attrs 100   100   440   950   0    0    0  >
+        , <&key_physical_attrs 100   100   570   950   0    0    0  >
+        , <&key_physical_attrs 100   100   700   950   0    0    0  >
+        , <&key_physical_attrs 100   100   830   950   0    0    0  >
         ;
     };
 
@@ -76,7 +86,8 @@
 
         layout1: layout1 {
             physical-layout = <&physical_layout0>;
-            positions = <0>, <1>, <2>, <3>, <4>, <5>, <6>, <7>;
+            positions = <0>, <1>, <2>, <3>, <4>, <5>, <6>, <7>,
+                        <8>, <9>, <10>, <11>, <12>, <13>, <14>;
         };
     };
 };

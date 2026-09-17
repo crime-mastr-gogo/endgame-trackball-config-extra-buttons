@@ -4,6 +4,7 @@
 #include <dt-bindings/zmk/adaptive_feedback.h>
 #include <dt-bindings/zmk/bistable_behavior.h>
 #include <dt-bindings/zmk/p2sm.h>
+#include <dt-bindings/ankur/actions.h>
 #include <behaviors/p2sm_behaviors.dtsi>
 #include <behaviors/esb_unpair.dtsi>
 #include <behaviors/esb_goto.dtsi>
@@ -110,6 +111,30 @@
 	};
 
 	behaviors {
+		ankur: ankur_control {
+			compatible = "ankur,control";
+			display-name = "Ankur firmware action";
+			#binding-cells = <1>;
+		};
+
+		copy_fine: copy_fine {
+			compatible = "zmk,behavior-hold-tap";
+			display-name = "Copy / Fine Cursor";
+			#binding-cells = <2>;
+			flavor = "tap-preferred";
+			tapping-term-ms = <300>;
+			bindings = <&ankur>, <&kp>;
+		};
+
+		paste_scroll: paste_scroll {
+			compatible = "zmk,behavior-hold-tap";
+			display-name = "Paste / Drag Scroll";
+			#binding-cells = <2>;
+			flavor = "tap-preferred";
+			tapping-term-ms = <300>;
+			bindings = <&ankur>, <&kp>;
+		};
+
 		cdch: click-double-click-hold {
 			compatible = "zmk,behavior-hold-tap";
 			display-name = "Copy/paste/layer (click/double-click/hold)";
@@ -196,26 +221,6 @@
 			scroll;
 		};
 
-		rotenc_follower: rotenc_follower {
-			compatible = "zmk,behavior-sensor-rotate-var";
-			#sensor-binding-cells = <2>;
-			bindings = <&flw>, <&flw>;
-			label = "Reserved [0]";
-		};
-
-		rotenc_sens: rotenc_sens {
-			compatible = "zmk,behavior-sensor-rotate-var";
-			#sensor-binding-cells = <2>;
-			bindings = <&sens_nowrap>, <&sens_nowrap>;
-			label = "Reserved [1]";
-		};
-
-		rotenc_scrlsens: rotenc_scrlsens {
-			compatible = "zmk,behavior-sensor-rotate-var";
-			#sensor-binding-cells = <2>;
-			bindings = <&scrlsens_nowrap>, <&scrlsens_nowrap>;
-			label = "Reserved [2]";
-		};
 
 		z_so_off {
 			display-name = "Power off";

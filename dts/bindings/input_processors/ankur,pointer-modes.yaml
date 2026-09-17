@@ -1,0 +1,7 @@
+description: Select the proven Endgame pointer pipeline without extra keymap layers
+compatible: "ankur,pointer-modes"
+include: ip_zero_param.yaml
+properties:
+  pipeline-devices:
+    type: phandles
+    required: true

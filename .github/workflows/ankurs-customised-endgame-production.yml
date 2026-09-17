@@ -1,0 +1,13 @@
+name: ankurs-customised-endgame-production
+
+on:
+  push:
+    branches: [ankurs-customised-endgame-firmware]
+  workflow_dispatch:
+
+jobs:
+  firmware:
+    uses: ./.github/workflows/ankur-build.yml
+    with:
+      build_name: ankurs-customised-endgame-production
+      snippets: studio-rpc-usb-uart ankur-production

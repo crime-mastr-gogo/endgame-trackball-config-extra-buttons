@@ -1,0 +1,3 @@
+description: Endgame custom controls with protected hold actions
+compatible: "ankur,control"
+include: one_param.yaml

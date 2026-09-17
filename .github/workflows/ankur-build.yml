@@ -1,0 +1,89 @@
+name: Ankur reusable firmware build
+
+on:
+  workflow_call:
+    inputs:
+      build_name:
+        required: true
+        type: string
+      snippets:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: ${{ inputs.build_name }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: zmkfirmware/zmk-build-arm:stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare isolated ZMK workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_dir="${RUNNER_TEMP}/zmk-config"
+          build_dir="${RUNNER_TEMP}/zmk-build"
+          mkdir -p "${base_dir}/config" "${build_dir}"
+          cp -R config/* "${base_dir}/config/"
+          echo "BASE_DIR=${base_dir}" >> "${GITHUB_ENV}"
+          echo "BUILD_DIR=${build_dir}" >> "${GITHUB_ENV}"
+
+      - name: Cache pinned west modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.BASE_DIR }}/modules
+            ${{ env.BASE_DIR }}/tools
+            ${{ env.BASE_DIR }}/zephyr
+            ${{ env.BASE_DIR }}/bootloader
+            ${{ env.BASE_DIR }}/zmk
+          key: ankur-zmk-modules-${{ hashFiles('config/west.yml') }}
+
+      - name: Initialize pinned dependencies
+        working-directory: ${{ env.BASE_DIR }}
+        run: |
+          west init -l config
+          west update --fetch-opt=--filter=tree:0
+          west zephyr-export
+
+      - name: Build trackball firmware
+        working-directory: ${{ env.BASE_DIR }}
+        run: |
+          west build -s zmk/app -d "${BUILD_DIR}" -b efogtech_trackball_0 \
+            -S "${{ inputs.snippets }}" -- \
+            -DZMK_CONFIG="${BASE_DIR}/config" \
+            -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}" \
+            -DCONFIG_ZMK_STUDIO=y
+
+      - name: Package UF2 and checksum
+        run: |
+          set -euo pipefail
+          mkdir -p package
+          cp "${BUILD_DIR}/zephyr/zmk.uf2" "package/${{ inputs.build_name }}.uf2"
+          cd package
+          sha256sum "${{ inputs.build_name }}.uf2" > SHA256SUMS.txt
+
+      - name: Upload ${{ inputs.build_name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build_name }}
+          path: package
+          if-no-files-found: error
+
+      - name: Print Kconfig on failure
+        if: failure()
+        run: test ! -f "${BUILD_DIR}/zephyr/.config" || grep -v -e '^#' -e '^$' "${BUILD_DIR}/zephyr/.config" | sort
+
+      - name: Print devicetree on failure
+        if: failure()
+        run: |
+          if [ -f "${BUILD_DIR}/zephyr/zephyr.dts" ]; then
+            cat "${BUILD_DIR}/zephyr/zephyr.dts"
+          elif [ -f "${BUILD_DIR}/zephyr/zephyr.dts.pre" ]; then
+            cat -s "${BUILD_DIR}/zephyr/zephyr.dts.pre"
+          fi
