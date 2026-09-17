@@ -13,16 +13,12 @@
 	ankur_modes: ankur_modes {
 		compatible = "ankur,pointer-modes";
 		#input-processor-cells = <0>;
-		pipeline-devices = <&zip_bistable_twist_scaler>, <&zip_pointer_accel>,
+		pipeline-devices = <&zip_bistable_twist_scaler>, <&zip_twist_full_notch_scaler>,
+			<&zip_pointer_accel>,
 			<&zip_scroll_accel>, <&zip_rotate_pointer>, <&zip_bistable_snipe_scaler>,
 			<&zip_bistable_scroll_xy_scaler>, <&zip_axis_clamper>,
 			<&zip_xy_to_scroll_mapper>, <&zip_scroll_transform>,
 			<&zip_dragscroll_accel>, <&zip_rotate_scroll>;
-	};
-
-	ankur_scroll_mode: ankur_scroll_mode {
-		compatible = "ankur,scroll-mode";
-		#input-processor-cells = <0>;
 	};
 
 	keymap {
@@ -100,7 +96,6 @@
 	};
 
 	trackball {
-		input-processors = <&ankur_modes>, <&ankur_scroll_mode>,
-					   <&esb_ip>, <&zip_ble_report_rate_limit>;
+		input-processors = <&ankur_modes>, <&esb_ip>, <&zip_ble_report_rate_limit>;
 	};
 };

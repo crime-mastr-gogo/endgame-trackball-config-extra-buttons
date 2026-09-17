@@ -19,6 +19,8 @@ class HardwareContract(unittest.TestCase):
         text = (BOARD / "buttons.dtsi").read_text()
         self.assertEqual(re.findall(r"RC\((\d+), 0\)", text), list(map(str, range(15))))
         self.assertEqual(text.count("<&key_physical_attrs"), 15)
+        sizes = re.findall(r"<&key_physical_attrs\\s+(\\d+)\\s+(\\d+)", text)
+        self.assertEqual(sizes[8:], [("100", "200")] * 7)
 
     def test_no_encoder_pin_owners(self):
         text = (BOARD / "encoders.dtsi").read_text()
@@ -53,15 +55,51 @@ class HardwareContract(unittest.TestCase):
     def test_exact_build_names_and_production_logging_policy(self):
         workflow = (ROOT / ".github/workflows/ankur-build.yml").read_text()
         self.assertIn("sha256sum", workflow)
-        for name in ("ankurs-customised-endgame-production",
-                     "ankurs-customised-endgame-debug"):
-            wrapper = ROOT / f".github/workflows/{name}.yml"
+        names = {
+            "ankurs-customised-endgame-production":
+                "ankurs customised endgame firmware production",
+            "ankurs-customised-endgame-debug":
+                "ankurs customised endgame firmware debug",
+        }
+        for artifact_name, display_name in names.items():
+            wrapper = ROOT / f".github/workflows/{artifact_name}.yml"
             self.assertTrue(wrapper.is_file())
-            self.assertIn(f"name: {name}", wrapper.read_text())
+            text = wrapper.read_text()
+            self.assertIn(f"name: {display_name}", text)
+            self.assertIn(f"run-name: {display_name}", text)
+            self.assertIn(f"build_name: {artifact_name}", text)
         production = (ROOT / "snippets/ankur-production/ankur-production.conf").read_text()
         self.assertIn("CONFIG_ZMK_USB_LOGGING=n", production)
         debug = (ROOT / ".github/workflows/ankurs-customised-endgame-debug.yml").read_text()
         self.assertIn("zmk-usb-logging", debug)
+
+    def test_identifiable_action_metadata(self):
+        controls = (ROOT / "src/controls.c").read_text()
+        for label in ("Toggle Drag Lock", "Next Bluetooth Profile",
+                      "Increase Twist Sensitivity", "Hold Drag Scroll"):
+            self.assertIn(f'ACTION_METADATA("{label}"', controls)
+        self.assertIn(".parameter_metadata=&ankur_metadata", controls)
+
+    def test_scroll_modes_match_824a58a(self):
+        pointer_dtsi = (BOARD / "pointer.dtsi").read_text()
+        twist = re.search(r"zip_bistable_twist_scaler:.*?\\n\\s*};", pointer_dtsi, re.S)
+        self.assertIsNotNone(twist)
+        self.assertIn("default-coef = <ZBS_SCALE(1, 40)>", twist.group(0))
+        self.assertIn("default-coef-slot1 = <ZBS_SCALE(1, 40)>", twist.group(0))
+        notch = re.search(r"zip_twist_full_notch_scaler:.*?\\n\\s*};", pointer_dtsi, re.S)
+        self.assertIsNotNone(notch)
+        self.assertIn("default-coef = <ZBS_SCALE(16, 1)>", notch.group(0))
+        pointer_c = (ROOT / "src/pointer.c").read_text()
+        self.assertIn("STAGE(zip_bistable_twist_scaler),STAGE(zip_twist_full_notch_scaler)",
+                      pointer_c)
+        self.assertNotIn("accumulated/16", pointer_c)
+        keymap = (ROOT / "config/efogtech_trackball_0.keymap").read_text()
+        self.assertNotIn("<&ankur_scroll_mode>", keymap)
+
+    def test_current_sleep_policy(self):
+        conf = (ROOT / "config/efogtech_trackball_0.conf").read_text()
+        self.assertIn("CONFIG_ZMK_IDLE_TIMEOUT=900000", conf)
+        self.assertIn("CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=900000", conf)
 
     def test_custom_module_exposes_snippets(self):
         module = (ROOT / "zephyr/module.yml").read_text()

@@ -38,6 +38,48 @@ static bool guard_fired[15];
 static bool initialized;
 static bool usb_hid_active;
 
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+#define ACTION_METADATA(label, action)                                                \
+    { .display_name = label, .type = BEHAVIOR_PARAMETER_VALUE_TYPE_VALUE, .value = action }
+static const struct behavior_parameter_value_metadata ankur_action_values[] = {
+    ACTION_METADATA("Toggle Drag Lock", AK_DRAG),
+    ACTION_METADATA("Hold 1 Second: Type Custom String", AK_STRING),
+    ACTION_METADATA("Increase Twist Sensitivity", AK_TWIST_INC),
+    ACTION_METADATA("Decrease Twist Sensitivity", AK_TWIST_DEC),
+    ACTION_METADATA("Increase Pointer Sensitivity", AK_POINTER_INC),
+    ACTION_METADATA("Decrease Pointer Sensitivity", AK_POINTER_DEC),
+    ACTION_METADATA("Next Bluetooth Profile", AK_NEXT),
+    ACTION_METADATA("Previous Bluetooth Profile", AK_PREV),
+    ACTION_METADATA("Hold 2 Seconds: Power Off", AK_OFF),
+    ACTION_METADATA("Unlock ZMK Studio", AK_UNLOCK),
+    ACTION_METADATA("Toggle Standard/High-Resolution Scroll", AK_SCROLL),
+    ACTION_METADATA("Hold 2 Seconds: Clear Current Bluetooth Profile", AK_BT_CLEAR),
+    ACTION_METADATA("Hold 2 Seconds: Clear All Bluetooth Profiles", AK_BT_CLEAR_ALL),
+    ACTION_METADATA("Hold 2 Seconds: Reset Sensitivity", AK_SENS_RESET),
+    ACTION_METADATA("Toggle Vibration", AK_VIB_TOGGLE),
+    ACTION_METADATA("Toggle LEDs", AK_LED_TOGGLE),
+    ACTION_METADATA("Report Twist Sensitivity", AK_REPORT_TWIST),
+    ACTION_METADATA("Report Bluetooth Profile", AK_REPORT_PROFILE),
+    ACTION_METADATA("Report Pointer Sensitivity", AK_REPORT_POINTER),
+    ACTION_METADATA("Report Battery Level", AK_REPORT_BATTERY),
+    ACTION_METADATA("Hold Fine Cursor", AK_FINE),
+    ACTION_METADATA("Hold Drag Scroll", AK_SCROLL_HELD),
+};
+#undef ACTION_METADATA
+
+static const struct behavior_parameter_metadata_set ankur_metadata_set = {
+    .param1_values = ankur_action_values,
+    .param1_values_len = ARRAY_SIZE(ankur_action_values),
+};
+static const struct behavior_parameter_metadata_set ankur_metadata_sets[] = {
+    ankur_metadata_set,
+};
+static const struct behavior_parameter_metadata ankur_metadata = {
+    .sets_len = ARRAY_SIZE(ankur_metadata_sets),
+    .sets = ankur_metadata_sets,
+};
+#endif
+
 bool ankur_fine_active(void) { return atomic_get(&fine_count)>0; }
 bool ankur_drag_scroll_active(void) { return atomic_get(&scroll_count)>0; }
 
@@ -258,7 +300,10 @@ static int control_release(struct zmk_behavior_binding *binding,struct zmk_behav
 }
 
 static const struct behavior_driver_api control_api={
-    .binding_pressed=control_press,.binding_released=control_release
+    .binding_pressed=control_press,.binding_released=control_release,
+#if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
+    .parameter_metadata=&ankur_metadata,
+#endif
 };
 BEHAVIOR_DT_INST_DEFINE(0,NULL,NULL,NULL,NULL,POST_KERNEL,
                         CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,&control_api);
