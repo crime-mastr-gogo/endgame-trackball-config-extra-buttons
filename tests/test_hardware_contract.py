@@ -19,7 +19,7 @@ class HardwareContract(unittest.TestCase):
         text = (BOARD / "buttons.dtsi").read_text()
         self.assertEqual(re.findall(r"RC\((\d+), 0\)", text), list(map(str, range(15))))
         self.assertEqual(text.count("<&key_physical_attrs"), 15)
-        sizes = re.findall(r"<&key_physical_attrs\\s+(\\d+)\\s+(\\d+)", text)
+        sizes = re.findall(r"<&key_physical_attrs\s+(\d+)\s+(\d+)", text)
         self.assertEqual(sizes[8:], [("100", "200")] * 7)
 
     def test_no_encoder_pin_owners(self):
@@ -82,11 +82,11 @@ class HardwareContract(unittest.TestCase):
 
     def test_scroll_modes_match_824a58a(self):
         pointer_dtsi = (BOARD / "pointer.dtsi").read_text()
-        twist = re.search(r"zip_bistable_twist_scaler:.*?\\n\\s*};", pointer_dtsi, re.S)
+        twist = re.search(r"zip_bistable_twist_scaler:.*?\n\s*};", pointer_dtsi, re.S)
         self.assertIsNotNone(twist)
         self.assertIn("default-coef = <ZBS_SCALE(1, 40)>", twist.group(0))
         self.assertIn("default-coef-slot1 = <ZBS_SCALE(1, 40)>", twist.group(0))
-        notch = re.search(r"zip_twist_full_notch_scaler:.*?\\n\\s*};", pointer_dtsi, re.S)
+        notch = re.search(r"zip_twist_full_notch_scaler:.*?\n\s*};", pointer_dtsi, re.S)
         self.assertIsNotNone(notch)
         self.assertIn("default-coef = <ZBS_SCALE(16, 1)>", notch.group(0))
         pointer_c = (ROOT / "src/pointer.c").read_text()
