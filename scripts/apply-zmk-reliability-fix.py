@@ -183,8 +183,24 @@ replace_once(
 
 
 # ---------------------------------------------------------------------------
-# Inherited warning cleanup.
+# Inherited physical-layout compiler warning cleanup.
+#
+# The upstream macro contains TWO duplicated const qualifiers:
+#
+#   static const struct zmk_key_physical_attrs const ...
+#   static const struct zmk_physical_layout const ...
+#
+# GCC reports the warning at the macro expansion line, so both declarations
+# must be corrected.
 # ---------------------------------------------------------------------------
+
+replace_once(
+    "app/src/physical_layouts.c",
+    """    static const struct zmk_key_physical_attrs const _CONCAT(                                      \\
+""",
+    """    static const struct zmk_key_physical_attrs _CONCAT(                                            \\
+""",
+)
 
 replace_once(
     "app/src/physical_layouts.c",
@@ -193,6 +209,21 @@ replace_once(
     """    static const struct zmk_physical_layout _CONCAT(_zmk_physical_layout_,                         \\
 """,
 )
+
+
+physical_layouts = (
+    ROOT / "app/src/physical_layouts.c"
+).read_text()
+
+for bad_duplicate_const in (
+    "struct zmk_key_physical_attrs const _CONCAT(",
+    "struct zmk_physical_layout const _CONCAT(",
+):
+    if bad_duplicate_const in physical_layouts:
+        raise SystemExit(
+            "ZMK physical-layout duplicate-const cleanup failed: "
+            f"{bad_duplicate_const}"
+        )
 
 
 required = {

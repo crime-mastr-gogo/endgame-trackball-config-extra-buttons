@@ -465,6 +465,9 @@ class HardwareContract(unittest.TestCase):
             "explicit_button_counts, 0",
             "zephyr/pm/device_runtime.h",
             "already-cleared mouse button",
+            "zmk_key_physical_attrs const _CONCAT",
+            "zmk_physical_layout const _CONCAT",
+            "bad_duplicate_const",
         ):
             self.assertIn(token, patcher)
 
