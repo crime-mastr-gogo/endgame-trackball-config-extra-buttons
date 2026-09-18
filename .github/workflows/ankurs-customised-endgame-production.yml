@@ -1,5 +1,5 @@
-name: 18 SEPT CODE IMPROVEMENTS
-run-name: 18 SEPT CODE IMPROVEMENTS
+name: 18 SEPT FIXED KEYSTRING
+run-name: 18 SEPT FIXED KEYSTRING
 
 on:
   push:
@@ -13,3 +13,121 @@ jobs:
       build_name: ankurs-customised-endgame-production
       snippets: studio-rpc-usb-uart ankur-production
       build_kind: production
+
+  fixed-keystring-dongle:
+    name: fixed-keystring-dongle
+    runs-on: ubuntu-latest
+
+    container:
+      image: zmkfirmware/zmk-build-arm@sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5
+
+    steps:
+      - name: Checkout customised configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Fetch immutable Endgame dongle source
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SRC="${RUNNER_TEMP}/endgame-dongle-source"
+
+          git clone \
+            --filter=blob:none \
+            --no-checkout \
+            https://github.com/efogtech/endgame-trackball-firmware.git \
+            "${SRC}"
+
+          git -C "${SRC}" checkout \
+            4b8941e47b9dd87797e98335c150f7723bb2675d
+
+          # Only initialise the three public submodules required to build
+          # the dongle. Do not initialise the unrelated trackball modules.
+          git -C "${SRC}" config \
+            submodule.zmk.url \
+            https://github.com/zmkfirmware/zmk.git
+
+          git -C "${SRC}" config \
+            submodule.zmk-esb-endpoint.url \
+            https://github.com/efogdev/zmk-esb-endpoint.git
+
+          git -C "${SRC}" config \
+            submodule.endgame-trackball-config.url \
+            https://github.com/efogtech/endgame-trackball-config.git
+
+          git -C "${SRC}" submodule update --init \
+            zmk \
+            zmk-esb-endpoint \
+            endgame-trackball-config
+
+          git -C "${SRC}/zmk-esb-endpoint" \
+            submodule update --init --recursive
+
+          echo "DONGLE_SRC=${SRC}" >> "${GITHUB_ENV}"
+
+      - name: Initialise Zephyr workspace
+        shell: bash
+        working-directory: ${{ env.DONGLE_SRC }}/zmk
+        run: |
+          set -euo pipefail
+
+          west init -l app
+          west update --fetch-opt=--filter=tree:0
+
+      - name: Apply fixed-keystring dongle protocol
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/apply-esb-keystring-indicators.py" \
+            "${DONGLE_SRC}/zmk-esb-endpoint"
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/apply-dongle-keystring-indicators.py" \
+            "${DONGLE_SRC}"
+
+          git -C "${DONGLE_SRC}/zmk-esb-endpoint" \
+            diff --check
+
+          git -C "${DONGLE_SRC}" \
+            diff --check -- dongle-1k-firmware
+
+      - name: Build companion dongle UF2
+        shell: bash
+        working-directory: ${{ env.DONGLE_SRC }}/zmk
+        run: |
+          set -euo pipefail
+
+          west build \
+            --pristine always \
+            -s ../dongle-1k-firmware \
+            -b efogtech_dongle_1k \
+            -- \
+            "-DZEPHYR_EXTRA_MODULES=${DONGLE_SRC}/endgame-trackball-config"
+
+          test -f build/zephyr/zephyr.uf2
+
+      - name: Package companion dongle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dongle-package
+
+          cp \
+            "${DONGLE_SRC}/zmk/build/zephyr/zephyr.uf2" \
+            dongle-package/ankurs-fixed-keystring-dongle.uf2
+
+          cd dongle-package
+
+          sha256sum \
+            ankurs-fixed-keystring-dongle.uf2 \
+            > SHA256SUMS.txt
+
+      - name: Upload companion dongle artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ankurs-fixed-keystring-dongle
+          path: dongle-package
+          if-no-files-found: error

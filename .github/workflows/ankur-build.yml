@@ -81,6 +81,9 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/scripts/apply-esb-lifecycle-fix.py" \
             "${BASE_DIR}/zmk-esb-endpoint"
 
+          python3 "${GITHUB_WORKSPACE}/scripts/apply-esb-keystring-indicators.py" \
+            "${BASE_DIR}/zmk-esb-endpoint"
+
           python3 "${GITHUB_WORKSPACE}/scripts/apply-pmw3610-cleanup.py" \
             "${BASE_DIR}/zmk-pmw3610-driver"
 

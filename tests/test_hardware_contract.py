@@ -227,10 +227,10 @@ class HardwareContract(unittest.TestCase):
     def test_exact_final_workflow_names_and_artifacts(self):
         names = {
             "ankurs-customised-endgame-production":
-                "18 SEPT CODE IMPROVEMENTS",
+                "18 SEPT FIXED KEYSTRING",
 
             "ankurs-customised-endgame-debug":
-                "18 SEPT CODE IMPROVEMENTS DEBUG",
+                "18 SEPT FIXED KEYSTRING DEBUG",
         }
 
         for artifact_name, display_name in names.items():
@@ -264,7 +264,7 @@ class HardwareContract(unittest.TestCase):
         ).read_text()
 
         self.assertIn(
-            "name: 18 SEPT CODE IMPROVEMENTS CONTRACT CHECKS",
+            "name: 18 SEPT FIXED KEYSTRING CONTRACT CHECKS",
             contract,
         )
 
@@ -665,6 +665,101 @@ class HardwareContract(unittest.TestCase):
                 obsolete,
                 behaviors,
             )
+
+
+    def test_caps_lock_independent_custom_string(self):
+        controls = (
+            ROOT / "src/controls.c"
+        ).read_text()
+
+        defconfig = (
+            BOARD /
+            "efogtech_trackball_0_defconfig"
+        ).read_text()
+
+        self.assertIn(
+            "CONFIG_ZMK_HID_INDICATORS=y",
+            defconfig,
+        )
+
+        for token in (
+            "macro_keys_caps_off",
+            "macro_keys_caps_on",
+            "HID_USAGE_LED_CAPS_LOCK",
+            "zmk_hid_indicators_get_current_profile",
+            "zmk_esb_endpoint_request_hid_indicators",
+            "zmk_esb_endpoint_get_hid_indicators",
+            "MACRO_ESB_INDICATOR_TIMEOUT_MS",
+        ):
+            self.assertIn(
+                token,
+                controls,
+            )
+
+        # Lower-case desired letters must use Shift only when Caps Lock is ON.
+        self.assertIn(
+            "DOT,\n    LS(L),\n    COMMA,\n    LS(K),\n    LS(M),\n    LS(J),",
+            controls,
+        )
+
+        # Upper-case desired letters must drop Shift when Caps Lock is ON.
+        self.assertIn(
+            "LS(DOT),\n    L,\n    LS(COMMA),\n    K,\n    M,\n    J,",
+            controls,
+        )
+
+        esb = (
+            ROOT /
+            "scripts/apply-esb-keystring-indicators.py"
+        ).read_text()
+
+        for token in (
+            "ESB_PKT_HID_INDICATOR_REQ",
+            "ESB_PKT_HID_INDICATORS",
+            "hid_indicator_response_state",
+        ):
+            self.assertIn(
+                token,
+                esb,
+            )
+
+        dongle = (
+            ROOT /
+            "scripts/apply-dongle-keystring-indicators.py"
+        ).read_text()
+
+        for token in (
+            "HID_REPORT_TYPE_OUTPUT",
+            "HID_USAGE_GEN_LEDS",
+            "HID_KBD_LED_CAPS_LOCK",
+            "usb_hid_get_keyboard_leds",
+            "CONFIG_ENABLE_HID_INT_OUT_EP=y",
+        ):
+            self.assertIn(
+                token,
+                dongle,
+            )
+
+        production = (
+            ROOT /
+            ".github/workflows/"
+            "ankurs-customised-endgame-production.yml"
+        ).read_text()
+
+        self.assertIn(
+            "name: 18 SEPT FIXED KEYSTRING",
+            production,
+        )
+
+        self.assertIn(
+            "ankurs-fixed-keystring-dongle",
+            production,
+        )
+
+        self.assertIn(
+            "4b8941e47b9dd87797e98335c150f7723bb2675d",
+            production,
+        )
 
 
     def test_custom_module_exposes_snippets(self):

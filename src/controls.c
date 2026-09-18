@@ -19,11 +19,14 @@
 #include <zmk/ble.h>
 #include <zmk/usb.h>
 #include <zmk/hid.h>
+#include <zmk/hid_indicators.h>
 #include <zmk/keymap.h>
+#include <zmk_esb/endpoint.h>
 #include <zmk/battery.h>
 #include <zmk/pm.h>
 #include <zmk/studio/core.h>
 #include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/hid_usage.h>
 #include <dt-bindings/zmk/pointing.h>
 #include <dt-bindings/ankur/actions.h>
 #include "ankur/controls.h"
@@ -120,38 +123,277 @@ static void apply_sensitivity(void) {
     if (p2sm_get_twist_coef()!=twist) p2sm_set_twist_coef(twist);
 }
 
-static const uint32_t macro_keys[]={SLASH,SEMI,DOT,L,COMMA,K,M,J,
-                                   LS(SLASH),LS(SEMI),LS(DOT),LS(L),LS(COMMA),LS(K),LS(M),LS(J),ENTER};
-BUILD_ASSERT(ARRAY_SIZE(macro_keys)==17);
-static uint8_t macro_index;
-static bool macro_running, macro_pressed;
-static void macro_tick(struct k_work *work);
-K_WORK_DELAYABLE_DEFINE(macro_work,macro_tick);
+/*
+ * Exact desired Windows / US-QWERTY output:
+ *
+ *     /;.l,kmj?:>L<KMJ
+ *
+ * followed by Enter.
+ *
+ * Caps Lock changes only alphabetic case. Punctuation is therefore identical
+ * in both arrays; letter Shift state is inverted when Caps Lock is ON.
+ */
+static const uint32_t macro_keys_caps_off[] = {
+    SLASH,
+    SEMI,
+    DOT,
+    L,
+    COMMA,
+    K,
+    M,
+    J,
+    LS(SLASH),
+    LS(SEMI),
+    LS(DOT),
+    LS(L),
+    LS(COMMA),
+    LS(K),
+    LS(M),
+    LS(J),
+    ENTER,
+};
 
-static void macro_cancel_locked(bool *release_key, uint32_t *keycode) {
-    k_work_cancel_delayable(&macro_work);
-    if (macro_pressed) {
-        *release_key=true;
-        *keycode=macro_keys[macro_index];
-    }
-    macro_pressed=false;
-    macro_running=false;
+static const uint32_t macro_keys_caps_on[] = {
+    SLASH,
+    SEMI,
+    DOT,
+    LS(L),
+    COMMA,
+    LS(K),
+    LS(M),
+    LS(J),
+    LS(SLASH),
+    LS(SEMI),
+    LS(DOT),
+    L,
+    LS(COMMA),
+    K,
+    M,
+    J,
+    ENTER,
+};
+
+BUILD_ASSERT(
+    ARRAY_SIZE(macro_keys_caps_off) == 17
+);
+
+BUILD_ASSERT(
+    ARRAY_SIZE(macro_keys_caps_on) ==
+    ARRAY_SIZE(macro_keys_caps_off)
+);
+
+#define CAPS_LOCK_INDICATOR_MASK \
+    BIT(HID_USAGE_LED_CAPS_LOCK - 1)
+
+#define MACRO_ESB_INDICATOR_TIMEOUT_MS 250
+#define MACRO_ESB_INDICATOR_POLL_MS 5
+#define MACRO_ESB_INDICATOR_REQUERY_MS 25
+
+static uint8_t macro_index;
+
+static bool macro_running;
+static bool macro_pressed;
+static bool macro_waiting_indicators;
+static bool macro_caps_on;
+
+static uint32_t macro_current_key;
+
+static int64_t macro_indicator_deadline;
+static int64_t macro_next_indicator_query;
+
+static void macro_tick(struct k_work *work);
+
+K_WORK_DELAYABLE_DEFINE(
+    macro_work,
+    macro_tick
+);
+
+
+static bool caps_lock_from_indicators(
+    const uint8_t indicators
+) {
+    return
+        (indicators & CAPS_LOCK_INDICATOR_MASK) != 0;
 }
+
+
+static bool local_host_caps_lock_on(void) {
+    const zmk_hid_indicators_t indicators =
+        zmk_hid_indicators_get_current_profile();
+
+    return caps_lock_from_indicators(indicators);
+}
+
+
+static uint32_t macro_key_at(
+    const uint8_t index
+) {
+    return macro_caps_on
+        ? macro_keys_caps_on[index]
+        : macro_keys_caps_off[index];
+}
+
+
+static void macro_cancel_locked(
+    bool *release_key,
+    uint32_t *keycode
+) {
+    k_work_cancel_delayable(&macro_work);
+
+    if (macro_pressed && macro_current_key != 0) {
+        *release_key = true;
+        *keycode = macro_current_key;
+    }
+
+    macro_pressed = false;
+    macro_running = false;
+    macro_waiting_indicators = false;
+
+    macro_current_key = 0;
+    macro_index = 0;
+
+    macro_indicator_deadline = 0;
+    macro_next_indicator_query = 0;
+}
+
 
 static void macro_tick(struct k_work *work) {
     ARG_UNUSED(work);
-    k_mutex_lock(&control_mutex,K_FOREVER);
-    if (!macro_running) { k_mutex_unlock(&control_mutex); return; }
-    if (macro_pressed) {
-        raise_zmk_keycode_state_changed_from_encoded(macro_keys[macro_index],false,k_uptime_get());
-        macro_pressed=false;
-        if (++macro_index==ARRAY_SIZE(macro_keys)) macro_running=false;
-    } else {
-        macro_pressed=true;
-        raise_zmk_keycode_state_changed_from_encoded(macro_keys[macro_index],true,k_uptime_get());
+
+    k_mutex_lock(
+        &control_mutex,
+        K_FOREVER
+    );
+
+    /*
+     * ESB must ask the USB dongle for the host LED state because the existing
+     * radio HID stream is keyboard -> dongle only.
+     *
+     * Never assume Caps Lock is OFF. If the dongle cannot provide a valid
+     * answer within the bounded timeout, abort instead of typing a wrong
+     * password/string.
+     */
+    if (macro_waiting_indicators) {
+        const int64_t now =
+            k_uptime_get();
+
+        uint8_t indicators = 0;
+
+        const int rc =
+            zmk_esb_endpoint_get_hid_indicators(
+                &indicators
+            );
+
+        if (rc == 0) {
+            macro_caps_on =
+                caps_lock_from_indicators(
+                    indicators
+                );
+
+            macro_waiting_indicators = false;
+            macro_running = true;
+
+        } else {
+            if (now >= macro_indicator_deadline) {
+                LOG_ERR(
+                    "Custom string aborted: "
+                    "ESB Caps Lock state unavailable"
+                );
+
+                macro_waiting_indicators = false;
+                macro_running = false;
+
+                k_mutex_unlock(
+                    &control_mutex
+                );
+
+                return;
+            }
+
+            if (now >= macro_next_indicator_query) {
+                const int request_rc =
+                    zmk_esb_endpoint_request_hid_indicators();
+
+                /*
+                 * -EAGAIN can occur during an ESB quiet window.
+                 * The bounded retry loop handles it naturally.
+                 */
+                if (request_rc < 0 &&
+                    request_rc != -EAGAIN) {
+
+                    LOG_DBG(
+                        "ESB HID indicator request retry: %d",
+                        request_rc
+                    );
+                }
+
+                macro_next_indicator_query =
+                    now +
+                    MACRO_ESB_INDICATOR_REQUERY_MS;
+            }
+
+            k_work_reschedule(
+                &macro_work,
+                K_MSEC(
+                    MACRO_ESB_INDICATOR_POLL_MS
+                )
+            );
+
+            k_mutex_unlock(
+                &control_mutex
+            );
+
+            return;
+        }
     }
-    if (macro_running) k_work_reschedule(&macro_work,K_MSEC(30));
-    k_mutex_unlock(&control_mutex);
+
+    if (!macro_running) {
+        k_mutex_unlock(
+            &control_mutex
+        );
+
+        return;
+    }
+
+    if (macro_pressed) {
+        raise_zmk_keycode_state_changed_from_encoded(
+            macro_current_key,
+            false,
+            k_uptime_get()
+        );
+
+        macro_pressed = false;
+        macro_current_key = 0;
+
+        if (++macro_index ==
+            ARRAY_SIZE(macro_keys_caps_off)) {
+
+            macro_running = false;
+        }
+
+    } else {
+        macro_current_key =
+            macro_key_at(macro_index);
+
+        macro_pressed = true;
+
+        raise_zmk_keycode_state_changed_from_encoded(
+            macro_current_key,
+            true,
+            k_uptime_get()
+        );
+    }
+
+    if (macro_running) {
+        k_work_reschedule(
+            &macro_work,
+            K_MSEC(30)
+        );
+    }
+
+    k_mutex_unlock(
+        &control_mutex
+    );
 }
 
 static void ankur_controls_cancel_internal(bool emit_hid_releases) {
@@ -269,12 +511,67 @@ static void perform(uint8_t action) {
 
         feedback(AK_DRAG_LOCK); break;
     case AK_STRING:
-        k_mutex_lock(&control_mutex,K_FOREVER);
-        if (!macro_running) {
-            macro_index=0; macro_pressed=false; macro_running=true;
-            k_work_reschedule(&macro_work,K_NO_WAIT);
+        k_mutex_lock(
+            &control_mutex,
+            K_FOREVER
+        );
+
+        if (!macro_running &&
+            !macro_waiting_indicators) {
+
+            macro_index = 0;
+            macro_pressed = false;
+            macro_current_key = 0;
+
+            if (zmk_esb_endpoint_is_active()) {
+                const int64_t now =
+                    k_uptime_get();
+
+                macro_running = false;
+                macro_waiting_indicators = true;
+
+                macro_indicator_deadline =
+                    now +
+                    MACRO_ESB_INDICATOR_TIMEOUT_MS;
+
+                macro_next_indicator_query =
+                    now +
+                    MACRO_ESB_INDICATOR_REQUERY_MS;
+
+                const int request_rc =
+                    zmk_esb_endpoint_request_hid_indicators();
+
+                if (request_rc < 0 &&
+                    request_rc != -EAGAIN) {
+
+                    LOG_DBG(
+                        "Initial ESB HID indicator request: %d",
+                        request_rc
+                    );
+                }
+
+            } else {
+                /*
+                 * USB and normal BLE profiles use ZMK's native host HID
+                 * indicator tracking.
+                 */
+                macro_caps_on =
+                    local_host_caps_lock_on();
+
+                macro_waiting_indicators = false;
+                macro_running = true;
+            }
+
+            k_work_reschedule(
+                &macro_work,
+                K_NO_WAIT
+            );
         }
-        k_mutex_unlock(&control_mutex);
+
+        k_mutex_unlock(
+            &control_mutex
+        );
+
         break;
     case AK_POINTER_INC: case AK_POINTER_DEC:
         old=p.pointer; p.pointer=ankur_level_step(old,action==AK_POINTER_INC);

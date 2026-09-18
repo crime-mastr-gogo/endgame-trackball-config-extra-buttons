@@ -61,7 +61,10 @@ momentary. T means transparent; on the base layer it has no action.
 | IO3 | Hold Control | T | Hold reset sensitivities | T | T |
 
 US QWERTY / Windows. Macro literal: `/;.l,kmj?:>L<KMJ` followed by Enter
-(16 characters and Enter). Ensure modifier release and safe cancellation.
+(16 characters and Enter). Output must be identical whether Caps Lock is ON or
+OFF. USB/BLE use host HID indicators; ESB uses the matching fixed-keystring
+dongle indicator relay. Never toggle the host's Caps Lock state merely to type
+the macro. Ensure modifier release and safe cancellation.
 Fine Cursor uses proven 0.25 scaling and remainders; neither held mode changes
 saved sensitivity. Drag Scroll retains upstream XY scroll processing. Drag Lock
 toggles held left mouse, is not persistent, and releases on inactivity, endpoint
@@ -72,8 +75,10 @@ change/loss, reset, shutdown and recovery.
 Five Bluetooth profiles plus existing ESB receiver as endpoint six; wrap next /
 previous through six. USB provides wired HID and Studio, restoring previous
 wireless selection on disconnect. Clear current/all affects BT only, never ESB
-pairing. Release HID state before switching. Preserve radio/dongle configuration
-and do not rebuild/flash dongle. Sleep after 15 minutes battery inactivity. Keep
+pairing. Release HID state before switching. Preserve radio/pairing/channel
+configuration. The only intentional dongle firmware exception is the companion
+18 SEPT FIXED KEYSTRING HID-indicator relay required to report host Caps Lock
+state over ESB. Sleep after 15 minutes battery inactivity. Keep
 awake during active wired input or Studio use. On non-active state stop feedback,
 cancel macros, release held HID and drag lock; wake restores saved preferences,
 not temporary layers or locks.
