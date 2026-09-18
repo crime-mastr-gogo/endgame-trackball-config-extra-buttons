@@ -84,9 +84,13 @@ jobs:
           python3 "${GITHUB_WORKSPACE}/scripts/apply-pmw3610-cleanup.py" \
             "${BASE_DIR}/zmk-pmw3610-driver"
 
+          python3 "${GITHUB_WORKSPACE}/scripts/apply-p2sm-cleanup.py" \
+            "${BASE_DIR}/zmk-pointer-2s-mixer"
+
           git -C "${BASE_DIR}/zmk" diff --check
           git -C "${BASE_DIR}/zmk-esb-endpoint" diff --check
           git -C "${BASE_DIR}/zmk-pmw3610-driver" diff --check
+          git -C "${BASE_DIR}/zmk-pointer-2s-mixer" diff --check
 
           west zephyr-export
 

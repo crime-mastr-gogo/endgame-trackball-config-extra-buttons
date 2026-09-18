@@ -137,6 +137,18 @@ class HardwareContract(unittest.TestCase):
             feedback,
         )
 
+        # The obsolete runtime RGB detector previously outlived CONFIG_SHELL
+        # and broke production compilation.
+        self.assertNotIn(
+            "rgb_hw_check_work_handler",
+            board,
+        )
+
+        self.assertNotIn(
+            "rgb_supported",
+            board,
+        )
+
 
     def test_debounce(self):
         text = (
@@ -563,6 +575,21 @@ class HardwareContract(unittest.TestCase):
             workflow,
         )
 
+        self.assertIn(
+            "apply-p2sm-cleanup.py",
+            workflow,
+        )
+
+        p2sm_patcher = (
+            ROOT /
+            "scripts/apply-p2sm-cleanup.py"
+        ).read_text()
+
+        self.assertIn(
+            "DT_HAS_COMPAT_STATUS_OKAY(zmk_behavior_p2sm_sens)",
+            p2sm_patcher,
+        )
+
         checker = (
             ROOT /
             "scripts/check-build-health.py"
@@ -576,6 +603,26 @@ class HardwareContract(unittest.TestCase):
         self.assertIn(
             '"flash": 95.0',
             checker,
+        )
+
+        self.assertIn(
+            "duplicate 'const' declaration specifier",
+            checker,
+        )
+
+        defconfig = (
+            BOARD /
+            "efogtech_trackball_0_defconfig"
+        ).read_text()
+
+        self.assertIn(
+            "CONFIG_SHELL=n",
+            defconfig,
+        )
+
+        self.assertNotIn(
+            "CONFIG_ZMK_BEHAVIOR_TAP_DANCE_MAX_HELD",
+            defconfig,
         )
 
 

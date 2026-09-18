@@ -75,6 +75,8 @@ serious_patterns = (
     "warning: CONSOLE ",
     "warning: UART_CONSOLE ",
     "warning: SHELL_BACKEND_SERIAL",
+    "warning: ZMK_BEHAVIOR_TAP_DANCE_MAX_HELD",
+    "duplicate 'const' declaration specifier",
     "Deprecated symbol NFCT_PINS_AS_GPIOS",
 )
 

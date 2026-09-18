@@ -346,36 +346,6 @@ static uint8_t crc8_checksum(const uint8_t *data, const size_t len) {
     return crc;
 }
 
-static bool rgb_supported = false;
-static bool rgb_override = false;
-
-static int rgb_settings_set(const char *name, size_t len, const settings_read_cb read_cb, void *cb_arg) {
-    if (strcmp(name, "override") == 0) {
-        bool val;
-        const int rc = read_cb(cb_arg, &val, sizeof(val));
-        if (rc >= 0) {
-            rgb_override = val;
-        }
-        return rc;
-    }
-    return -ENOENT;
-}
-
-SETTINGS_STATIC_HANDLER_DEFINE(board_rgb, "board/rgb", NULL, rgb_settings_set, NULL, NULL);
-
-static int cmd_check_rgb(const struct shell *sh, const size_t argc, char **argv) {
-    if (argc == 1) {
-        shprint(sh, "RGB support: %s", rgb_supported ? "yes" : "no");
-    } else {
-        rgb_override = true;
-        rgb_supported = true;
-        settings_save_one("board/rgb/override", &rgb_override, sizeof(rgb_override));
-        shprint(sh, "RGB support overridden.");
-    }
-
-    return 0;
-}
-
 /**
  * Dumps NVS storage partition contents in HEX format with checksums.
  *
@@ -447,7 +417,6 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_board,
     SHELL_CMD(layers, NULL, "List all layers", cmd_layers),
     SHELL_CMD(backup, NULL, "Backup NVS partition", cmd_backup),
     SHELL_CMD(restore, NULL, "Restore from backup", cmd_restore),
-    SHELL_CMD(rgb, NULL, "Check RGB support", cmd_check_rgb),
     SHELL_SUBCMD_SET_END
 );
 
@@ -456,47 +425,39 @@ SHELL_CMD_REGISTER(board, &sub_board, "Control the device", NULL);
 
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
-static int16_t settings_log_source_id = -1;
-static uint32_t settings_log_saved_level;
-
-static void rgb_hw_check_work_handler(struct k_work *work) {
-    settings_load_subtree("board/rgb");
-
-    /* This confirmed RGB-equipped PCB uses IO1/IO2 as keys. The upstream
-     * hardware probe reconfigured those pins after kscan initialization. Never
-     * probe or disconnect them: kscan owns them for the entire device lifetime. */
-    rgb_supported = true;
-
-#ifdef CONFIG_LOG_DOMAIN_ID
-    if (settings_log_source_id >= 0) {
-        log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, settings_log_saved_level);
-        settings_log_source_id = -1;
-    }
-#endif
-}
-
-static K_WORK_DELAYABLE_DEFINE(rgb_hw_check_work, rgb_hw_check_work_handler);
-
 static int pinmux_efgtch_trckbl_init(void) {
-    pm_device_action_run(uart, PM_DEVICE_ACTION_SUSPEND);
-    pm_device_action_run(uart, PM_DEVICE_ACTION_TURN_OFF);
+    int rc = pm_device_action_run(
+        uart,
+        PM_DEVICE_ACTION_SUSPEND
+    );
 
-#ifdef CONFIG_LOG_DOMAIN_ID
-    const uint32_t src_cnt = log_src_cnt_get(CONFIG_LOG_DOMAIN_ID);
-    for (uint32_t i = 0; i < src_cnt; i++) {
-        if (strcmp(log_source_name_get(CONFIG_LOG_DOMAIN_ID, i), "settings") == 0) {
-            settings_log_source_id = (int16_t)i;
-            settings_log_saved_level = log_filter_set(NULL, CONFIG_LOG_DOMAIN_ID, settings_log_source_id, LOG_LEVEL_NONE);
-            break;
-        }
+    if (rc && rc != -ENOTSUP) {
+        LOG_WRN(
+            "Unable to suspend Studio UART during init: %d",
+            rc
+        );
     }
-#endif
 
-    k_work_schedule(&rgb_hw_check_work, K_MSEC(100));
+    rc = pm_device_action_run(
+        uart,
+        PM_DEVICE_ACTION_TURN_OFF
+    );
+
+    if (rc && rc != -ENOTSUP) {
+        LOG_WRN(
+            "Unable to power down Studio UART during init: %d",
+            rc
+        );
+    }
+
     return 0;
 }
 
-SYS_INIT(pinmux_efgtch_trckbl_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+SYS_INIT(
+    pinmux_efgtch_trckbl_init,
+    APPLICATION,
+    CONFIG_APPLICATION_INIT_PRIORITY
+);
 
 #if IS_ENABLED(CONFIG_USB_DEVICE_STACK)
 static int usb_conn_chg(const zmk_event_t *eh) {

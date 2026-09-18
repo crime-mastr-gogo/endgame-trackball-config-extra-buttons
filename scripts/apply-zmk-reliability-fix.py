@@ -29,16 +29,20 @@ def replace_once(relpath, old, new):
     path = ROOT / relpath
     text = path.read_text()
 
+    # Always prefer replacing the exact OLD block when it still exists.
+    # A similar NEW string elsewhere in the same file must not cause this
+    # patch to be skipped.
+    if old in text:
+        path.write_text(text.replace(old, new, 1))
+        return
+
     if new in text:
         return
 
-    if old not in text:
-        raise SystemExit(
-            f"Expected source block not found in {relpath}; "
-            "refusing partial ZMK patch."
-        )
-
-    path.write_text(text.replace(old, new, 1))
+    raise SystemExit(
+        f"Expected source block not found in {relpath}; "
+        "refusing partial ZMK patch."
+    )
 
 
 # ---------------------------------------------------------------------------
