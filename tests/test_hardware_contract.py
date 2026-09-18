@@ -762,6 +762,197 @@ class HardwareContract(unittest.TestCase):
         )
 
 
+    def test_reliability_v2_lifecycle_contracts(self):
+        controls = (
+            ROOT / "src/controls.c"
+        ).read_text()
+
+        feedback = (
+            ROOT / "src/feedback.c"
+        ).read_text()
+
+        settings = (
+            ROOT / "src/settings.c"
+        ).read_text()
+
+        zmk_validity = (
+            ROOT /
+            "scripts/apply-zmk-indicator-validity.py"
+        ).read_text()
+
+        esb_v2 = (
+            ROOT /
+            "scripts/apply-esb-reliability-v2.py"
+        ).read_text()
+
+        dongle_v2 = (
+            ROOT /
+            "scripts/apply-dongle-reliability-v2.py"
+        ).read_text()
+
+        workflow = (
+            ROOT /
+            ".github/workflows/ankur-build.yml"
+        ).read_text()
+
+        production = (
+            ROOT /
+            ".github/workflows/"
+            "ankurs-customised-endgame-production.yml"
+        ).read_text()
+
+        for patcher in (
+            "apply-zmk-indicator-validity.py",
+            "apply-esb-reliability-v2.py",
+        ):
+            self.assertIn(patcher, workflow)
+
+        for patcher in (
+            "apply-esb-reliability-v2.py",
+            "apply-dongle-reliability-v2.py",
+        ):
+            self.assertIn(patcher, production)
+
+        for token in (
+            "zmk_hid_indicators_current_profile_is_valid",
+            "zmk_hid_indicators_invalidate_profile",
+            "hid_indicators_valid[profile] = true",
+            "hid_indicators_valid[profile] = false",
+        ):
+            self.assertIn(token, zmk_validity)
+
+        for token in (
+            "uint8_t seq;",
+            "pkt->seq != expected",
+            "ESB_PKT_HOST_NEUTRAL",
+            "ESB_PKT_HELD_KEEPALIVE",
+            "HELD_HID_KEEPALIVE_MS 60",
+            "pairing_hid_state_is_neutral",
+            "pairing_reset_hid_state();",
+            "esb_transport_flush_tx();",
+            "esb_transport_send_blocking",
+        ):
+            self.assertIn(token, esb_v2)
+
+        reset = esb_v2.index(
+            "pairing_reset_hid_state();"
+        )
+        flush = esb_v2.index(
+            "esb_transport_flush_tx();",
+            reset,
+        )
+        send = esb_v2.index(
+            "esb_transport_send_blocking",
+            flush,
+        )
+
+        self.assertLess(reset, flush)
+        self.assertLess(flush, send)
+
+        for token in (
+            "usb_hid_clear_all",
+            ".seq = req->seq",
+            "case ESB_PKT_HOST_NEUTRAL:",
+            "case ESB_PKT_HELD_KEEPALIVE:",
+            "rollback_silence_work_fn",
+            "USB HID fail-safe neutralization failed",
+        ):
+            self.assertIn(token, dongle_v2)
+
+        for token in (
+            "macro_esb_seq",
+            "zmk_hid_indicators_current_profile_is_valid",
+            "zmk_esb_endpoint_neutralize_host",
+            'neutralize_esb_host_if_selected("profile switch")',
+            '"USB takeover"',
+            "invalidate_ble_indicator_profile",
+            "fresh Caps Lock state unavailable",
+        ):
+            self.assertIn(token, controls)
+
+        profile_block = re.search(
+            r"case AK_NEXT: case AK_PREV:.*?break;",
+            controls,
+            re.S,
+        )
+
+        self.assertIsNotNone(profile_block)
+
+        profile_text = profile_block.group(0)
+
+        self.assertLess(
+            profile_text.index("ankur_controls_cancel();"),
+            profile_text.index(
+                "neutralize_esb_host_if_selected"
+            ),
+        )
+
+        self.assertLess(
+            profile_text.index(
+                "neutralize_esb_host_if_selected"
+            ),
+            profile_text.index(
+                "zmk_endpoints_clear_current();"
+            ),
+        )
+
+        self.assertIn(
+            "feedback_power_finish(false, false);",
+            feedback,
+        )
+
+        reset_fn = re.search(
+            r"int ankur_settings_reset\(void\) \{.*?\n\}",
+            settings,
+            re.S,
+        )
+
+        self.assertIsNotNone(reset_fn)
+        self.assertIn("++generation;", reset_fn.group(0))
+        self.assertIn(
+            "k_work_cancel_delayable(&save_work)",
+            reset_fn.group(0),
+        )
+
+        self.assertTrue(
+            (
+                ROOT /
+                "tests/test_reliability_model.py"
+            ).is_file()
+        )
+
+
+    def test_candidate_branch_runs_only_custom_workflows(self):
+        candidate = "ankur-reliability-pass-18-sept"
+
+        generic = (
+            ROOT /
+            ".github/workflows/build.yml"
+        ).read_text()
+
+        production = (
+            ROOT /
+            ".github/workflows/"
+            "ankurs-customised-endgame-production.yml"
+        ).read_text()
+
+        debug = (
+            ROOT /
+            ".github/workflows/"
+            "ankurs-customised-endgame-debug.yml"
+        ).read_text()
+
+        contracts = (
+            ROOT /
+            ".github/workflows/contract-checks.yml"
+        ).read_text()
+
+        self.assertIn(candidate, generic)
+        self.assertIn(candidate, production)
+        self.assertIn(candidate, debug)
+        self.assertIn(candidate, contracts)
+
+
     def test_custom_module_exposes_snippets(self):
         module = (
             ROOT / "zephyr/module.yml"

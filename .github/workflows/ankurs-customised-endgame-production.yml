@@ -3,7 +3,9 @@ run-name: 18 SEPT FIXED KEYSTRING
 
 on:
   push:
-    branches: [ankurs-customised-endgame-firmware]
+    branches:
+      - ankurs-customised-endgame-firmware
+      - ankur-reliability-pass-18-sept
   workflow_dispatch:
 
 jobs:
@@ -85,6 +87,14 @@ jobs:
 
           python3 \
             "${GITHUB_WORKSPACE}/scripts/apply-dongle-keystring-indicators.py" \
+            "${DONGLE_SRC}"
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/apply-esb-reliability-v2.py" \
+            "${DONGLE_SRC}/zmk-esb-endpoint"
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/apply-dongle-reliability-v2.py" \
             "${DONGLE_SRC}"
 
           git -C "${DONGLE_SRC}/zmk-esb-endpoint" \

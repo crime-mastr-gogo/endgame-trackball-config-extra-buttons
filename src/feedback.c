@@ -262,6 +262,13 @@ static void tick(struct k_work *work) {
         feedback_power_prepare(need_power, session_led);
 
     if (power_rc) {
+        /*
+         * A partial enable can leave P1.0 on even if the later RGB-enable
+         * stage failed. Always roll every feedback rail back to OFF before
+         * retrying on the next tick.
+         */
+        feedback_power_finish(false, false);
+
         if (!power_fault_logged) {
             LOG_ERR("Failed to enable feedback power: %d", power_rc);
             power_fault_logged = true;

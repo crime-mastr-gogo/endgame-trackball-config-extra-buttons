@@ -109,6 +109,59 @@ static void feedback(enum ankur_feedback_event event) {
     ankur_feedback_play(ankur_patterns[event],p.leds,p.vibration);
 }
 
+static void invalidate_ble_indicator_profile(int profile) {
+    if (profile < 0 ||
+        profile >= (ZMK_BLE_PROFILE_COUNT - 1)) {
+        return;
+    }
+
+    struct zmk_endpoint_instance endpoint = {
+        .transport = ZMK_TRANSPORT_BLE,
+        .ble = {
+            .profile_index = profile,
+        },
+    };
+
+    zmk_hid_indicators_invalidate_profile(endpoint);
+}
+
+static void invalidate_all_ble_indicators(void) {
+    for (int profile = 0;
+         profile < (ZMK_BLE_PROFILE_COUNT - 1);
+         ++profile) {
+        invalidate_ble_indicator_profile(profile);
+    }
+}
+
+static void invalidate_usb_indicators(void) {
+    const struct zmk_endpoint_instance endpoint = {
+        .transport = ZMK_TRANSPORT_USB,
+    };
+
+    zmk_hid_indicators_invalidate_profile(endpoint);
+}
+
+static int neutralize_esb_host_if_selected(
+    const char *context
+) {
+    if (zmk_ble_active_profile_index() !=
+        (ZMK_BLE_PROFILE_COUNT - 1)) {
+        return 0;
+    }
+
+    const int rc = zmk_esb_endpoint_neutralize_host();
+
+    if (rc && rc != -ENOTCONN && rc != -ENOTSUP) {
+        LOG_WRN(
+            "ESB host neutralization failed before %s: %d",
+            context,
+            rc
+        );
+    }
+
+    return rc;
+}
+
 static int mouse_left(bool down) {
     struct zmk_behavior_binding binding={.behavior_dev=DEVICE_DT_NAME(DT_NODELABEL(mkp)),.param1=LCLK};
     struct zmk_behavior_binding_event event={.position=8,.timestamp=k_uptime_get()};
@@ -194,8 +247,10 @@ static uint8_t macro_index;
 static bool macro_running;
 static bool macro_pressed;
 static bool macro_waiting_indicators;
+static bool macro_waiting_esb;
 static bool macro_caps_on;
 
+static uint8_t macro_esb_seq;
 static uint32_t macro_current_key;
 
 static int64_t macro_indicator_deadline;
@@ -217,11 +272,20 @@ static bool caps_lock_from_indicators(
 }
 
 
-static bool local_host_caps_lock_on(void) {
+static int local_host_caps_lock_on(bool *caps_on) {
+    if (caps_on == NULL) {
+        return -EINVAL;
+    }
+
+    if (!zmk_hid_indicators_current_profile_is_valid()) {
+        return -EAGAIN;
+    }
+
     const zmk_hid_indicators_t indicators =
         zmk_hid_indicators_get_current_profile();
 
-    return caps_lock_from_indicators(indicators);
+    *caps_on = caps_lock_from_indicators(indicators);
+    return 0;
 }
 
 
@@ -248,6 +312,7 @@ static void macro_cancel_locked(
     macro_pressed = false;
     macro_running = false;
     macro_waiting_indicators = false;
+    macro_waiting_esb = false;
 
     macro_current_key = 0;
     macro_index = 0;
@@ -274,53 +339,60 @@ static void macro_tick(struct k_work *work) {
      * password/string.
      */
     if (macro_waiting_indicators) {
-        const int64_t now =
-            k_uptime_get();
+        const int64_t now = k_uptime_get();
+        int rc = -EAGAIN;
 
-        uint8_t indicators = 0;
+        if (macro_waiting_esb) {
+            uint8_t indicators = 0;
 
-        const int rc =
-            zmk_esb_endpoint_get_hid_indicators(
+            rc = zmk_esb_endpoint_get_hid_indicators(
+                macro_esb_seq,
                 &indicators
             );
 
+            if (rc == 0) {
+                macro_caps_on =
+                    caps_lock_from_indicators(indicators);
+            }
+        } else {
+            bool caps_on = false;
+
+            rc = local_host_caps_lock_on(&caps_on);
+
+            if (rc == 0) {
+                macro_caps_on = caps_on;
+            }
+        }
+
         if (rc == 0) {
-            macro_caps_on =
-                caps_lock_from_indicators(
-                    indicators
-                );
-
             macro_waiting_indicators = false;
+            macro_waiting_esb = false;
             macro_running = true;
-
         } else {
             if (now >= macro_indicator_deadline) {
                 LOG_ERR(
                     "Custom string aborted: "
-                    "ESB Caps Lock state unavailable"
+                    "fresh Caps Lock state unavailable"
                 );
 
                 macro_waiting_indicators = false;
+                macro_waiting_esb = false;
                 macro_running = false;
 
-                k_mutex_unlock(
-                    &control_mutex
-                );
-
+                k_mutex_unlock(&control_mutex);
                 return;
             }
 
-            if (now >= macro_next_indicator_query) {
-                const int request_rc =
-                    zmk_esb_endpoint_request_hid_indicators();
+            if (macro_waiting_esb &&
+                now >= macro_next_indicator_query) {
 
-                /*
-                 * -EAGAIN can occur during an ESB quiet window.
-                 * The bounded retry loop handles it naturally.
-                 */
+                const int request_rc =
+                    zmk_esb_endpoint_request_hid_indicators(
+                        macro_esb_seq
+                    );
+
                 if (request_rc < 0 &&
                     request_rc != -EAGAIN) {
-
                     LOG_DBG(
                         "ESB HID indicator request retry: %d",
                         request_rc
@@ -328,21 +400,15 @@ static void macro_tick(struct k_work *work) {
                 }
 
                 macro_next_indicator_query =
-                    now +
-                    MACRO_ESB_INDICATOR_REQUERY_MS;
+                    now + MACRO_ESB_INDICATOR_REQUERY_MS;
             }
 
             k_work_reschedule(
                 &macro_work,
-                K_MSEC(
-                    MACRO_ESB_INDICATOR_POLL_MS
-                )
+                K_MSEC(MACRO_ESB_INDICATOR_POLL_MS)
             );
 
-            k_mutex_unlock(
-                &control_mutex
-            );
-
+            k_mutex_unlock(&control_mutex);
             return;
         }
     }
@@ -457,6 +523,7 @@ static void power_off(struct k_work *work) {
     ARG_UNUSED(work);
 
     ankur_controls_cancel();
+    (void)neutralize_esb_host_if_selected("power-off");
     zmk_endpoints_clear_current();
 
     int rc = ankur_settings_flush();
@@ -511,67 +578,53 @@ static void perform(uint8_t action) {
 
         feedback(AK_DRAG_LOCK); break;
     case AK_STRING:
-        k_mutex_lock(
-            &control_mutex,
-            K_FOREVER
-        );
+        k_mutex_lock(&control_mutex,K_FOREVER);
 
         if (!macro_running &&
             !macro_waiting_indicators) {
 
+            const int64_t now = k_uptime_get();
+
             macro_index = 0;
             macro_pressed = false;
             macro_current_key = 0;
+            macro_running = false;
+            macro_waiting_indicators = true;
+            macro_indicator_deadline =
+                now + MACRO_ESB_INDICATOR_TIMEOUT_MS;
 
             if (zmk_esb_endpoint_is_active()) {
-                const int64_t now =
-                    k_uptime_get();
-
-                macro_running = false;
-                macro_waiting_indicators = true;
-
-                macro_indicator_deadline =
-                    now +
-                    MACRO_ESB_INDICATOR_TIMEOUT_MS;
-
-                macro_next_indicator_query =
-                    now +
-                    MACRO_ESB_INDICATOR_REQUERY_MS;
+                macro_waiting_esb = true;
+                ++macro_esb_seq;
 
                 const int request_rc =
-                    zmk_esb_endpoint_request_hid_indicators();
+                    zmk_esb_endpoint_request_hid_indicators(
+                        macro_esb_seq
+                    );
 
                 if (request_rc < 0 &&
                     request_rc != -EAGAIN) {
-
                     LOG_DBG(
                         "Initial ESB HID indicator request: %d",
                         request_rc
                     );
                 }
 
+                macro_next_indicator_query =
+                    now + MACRO_ESB_INDICATOR_REQUERY_MS;
             } else {
                 /*
-                 * USB and normal BLE profiles use ZMK's native host HID
-                 * indicator tracking.
+                 * USB/BLE indicator state is accepted only after the
+                 * current connection epoch has received a host report.
                  */
-                macro_caps_on =
-                    local_host_caps_lock_on();
-
-                macro_waiting_indicators = false;
-                macro_running = true;
+                macro_waiting_esb = false;
+                macro_next_indicator_query = 0;
             }
 
-            k_work_reschedule(
-                &macro_work,
-                K_NO_WAIT
-            );
+            k_work_reschedule(&macro_work,K_NO_WAIT);
         }
 
-        k_mutex_unlock(
-            &control_mutex
-        );
-
+        k_mutex_unlock(&control_mutex);
         break;
     case AK_POINTER_INC: case AK_POINTER_DEC:
         old=p.pointer; p.pointer=ankur_level_step(old,action==AK_POINTER_INC);
@@ -595,6 +648,7 @@ static void perform(uint8_t action) {
                  (action==AK_TWIST_INC?AK_TWIST_UP:AK_TWIST_DOWN)); break;
     case AK_NEXT: case AK_PREV:
         ankur_controls_cancel();
+        (void)neutralize_esb_host_if_selected("profile switch");
         zmk_endpoints_clear_current();
         int profile_rc =
             zmk_ble_prof_select(
@@ -625,15 +679,26 @@ static void perform(uint8_t action) {
         ankur_pointer_set_high_res(p.high_res);
         feedback(p.high_res?AK_HIGH_RES:AK_STANDARD);
         break;
-    case AK_BT_CLEAR:
-        if (zmk_ble_active_profile_index()<5) {
+    case AK_BT_CLEAR: {
+        const int active_profile =
+            zmk_ble_active_profile_index();
+
+        if (active_profile <
+            (ZMK_BLE_PROFILE_COUNT - 1)) {
+
+            invalidate_ble_indicator_profile(
+                active_profile
+            );
+
             ankur_controls_cancel();
             zmk_endpoints_clear_current();
             zmk_ble_clear_bonds();
             feedback(AK_CLEAR_CURRENT);
         }
         break;
+    }
     case AK_BT_CLEAR_ALL:
+        invalidate_all_ble_indicators();
         ankur_controls_cancel();
         zmk_endpoints_clear_current();
 
@@ -763,6 +828,8 @@ BEHAVIOR_DT_INST_DEFINE(0,NULL,NULL,NULL,NULL,POST_KERNEL,
 
 static int reset_preferences(void) {
     ankur_controls_cancel();
+    (void)neutralize_esb_host_if_selected("factory reset");
+    invalidate_all_ble_indicators();
 
     /*
      * Studio factory-reset is a lifecycle boundary. Explicitly converge the
@@ -853,8 +920,14 @@ static void ankur_bt_disconnected(
     struct bt_conn *conn,
     uint8_t reason
 ) {
-    ARG_UNUSED(conn);
     ARG_UNUSED(reason);
+
+    const int profile =
+        zmk_ble_profile_index(
+            bt_conn_get_dst(conn)
+        );
+
+    invalidate_ble_indicator_profile(profile);
 
     k_work_reschedule(
         &ble_disconnect_cleanup_work,
@@ -871,7 +944,10 @@ static int control_event(const zmk_event_t *eh) {
     const struct zmk_activity_state_changed *activity=as_zmk_activity_state_changed(eh);
     if (activity) {
         if (activity->state!=ZMK_ACTIVITY_ACTIVE) {
-            ankur_controls_cancel(); zmk_endpoints_clear_current(); zmk_keymap_layer_to(0);
+            ankur_controls_cancel();
+            (void)neutralize_esb_host_if_selected("inactivity");
+            zmk_endpoints_clear_current();
+            zmk_keymap_layer_to(0);
         } else {
             apply_sensitivity();
         }
@@ -887,6 +963,14 @@ static int control_event(const zmk_event_t *eh) {
         bool now_hid=zmk_usb_get_conn_state()==ZMK_USB_CONN_HID;
         if (now_hid!=usb_hid_active) {
             ankur_controls_cancel();
+
+            if (now_hid) {
+                (void)neutralize_esb_host_if_selected(
+                    "USB takeover"
+                );
+            } else {
+                invalidate_usb_indicators();
+            }
 
             int rc=zmk_endpoints_select_transport(
                 now_hid

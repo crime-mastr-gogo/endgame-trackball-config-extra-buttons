@@ -3,7 +3,9 @@ run-name: 18 SEPT FIXED KEYSTRING CONTRACT CHECKS
 
 on:
   push:
-    branches: [ankurs-customised-endgame-firmware]
+    branches:
+      - ankurs-customised-endgame-firmware
+      - ankur-reliability-pass-18-sept
   pull_request:
 
 jobs:

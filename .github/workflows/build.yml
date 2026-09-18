@@ -1,7 +1,9 @@
 name: Build ZMK firmware
 on:
   push:
-    branches-ignore: [ankurs-customised-endgame-firmware]
+    branches-ignore:
+      - ankurs-customised-endgame-firmware
+      - ankur-reliability-pass-18-sept
   pull_request:
   workflow_dispatch:
 

@@ -66,8 +66,19 @@ int ankur_settings_set(struct ankur_preferences preferences) {
 
 int ankur_settings_reset(void) {
     const struct ankur_preferences defaults = ANKUR_DEFAULTS;
-    int rc = ankur_settings_set(defaults);
-    return rc ? rc : ankur_settings_flush();
+
+    /*
+     * Factory reset must repair storage even when RAM already equals the
+     * defaults (for example after an incompatible/corrupt NVS record was
+     * ignored during boot). Force one new generation and flush it now.
+     */
+    k_spinlock_key_t key = k_spin_lock(&state_lock);
+    current = defaults;
+    ++generation;
+    k_spin_unlock(&state_lock, key);
+
+    (void)k_work_cancel_delayable(&save_work);
+    return ankur_settings_flush();
 }
 
 static int ankur_settings_load(const char *name, size_t len, settings_read_cb read_cb, void *arg) {

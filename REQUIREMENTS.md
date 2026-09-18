@@ -62,9 +62,12 @@ momentary. T means transparent; on the base layer it has no action.
 
 US QWERTY / Windows. Macro literal: `/;.l,kmj?:>L<KMJ` followed by Enter
 (16 characters and Enter). Output must be identical whether Caps Lock is ON or
-OFF. USB/BLE use host HID indicators; ESB uses the matching fixed-keystring
-dongle indicator relay. Never toggle the host's Caps Lock state merely to type
-the macro. Ensure modifier release and safe cancellation.
+OFF. USB/BLE use host HID indicators only after the current connection epoch
+has supplied a valid report. ESB uses the matching dongle indicator relay with
+a per-request sequence number so stale ACK payloads cannot satisfy a later
+macro invocation. Never toggle the host's Caps Lock state merely to type the
+macro. If fresh state cannot be established within the bounded wait, abort
+instead of typing the wrong string. Ensure modifier release and safe cancellation.
 Fine Cursor uses proven 0.25 scaling and remainders; neither held mode changes
 saved sensitivity. Drag Scroll retains upstream XY scroll processing. Drag Lock
 toggles held left mouse, is not persistent, and releases on inactivity, endpoint
@@ -76,9 +79,13 @@ Five Bluetooth profiles plus existing ESB receiver as endpoint six; wrap next /
 previous through six. USB provides wired HID and Studio, restoring previous
 wireless selection on disconnect. Clear current/all affects BT only, never ESB
 pairing. Release HID state before switching. Preserve radio/pairing/channel
-configuration. The only intentional dongle firmware exception is the companion
-18 SEPT FIXED KEYSTRING HID-indicator relay required to report host Caps Lock
-state over ESB. Sleep after 15 minutes battery inactivity. Keep
+configuration. The companion dongle firmware may additionally implement host
+HID neutralisation and held-state liveness required to prevent stuck keys or
+mouse buttons across ESB profile switches, USB takeover, power loss, and
+prolonged genuine radio loss. Held non-neutral ESB HID state must keep a bounded
+liveness heartbeat active; the receiver may fail-safe to neutral only after the
+long-loss threshold, not the short speculative-hop timeout. Sleep after
+15 minutes battery inactivity. Keep
 awake during active wired input or Studio use. On non-active state stop feedback,
 cancel macros, release held HID and drag lock; wake restores saved preferences,
 not temporary layers or locks.
@@ -168,7 +175,9 @@ Below 5% still provide LED acknowledgment when enabled.
 
 Save pointer/twist levels, scroll mode and feedback preferences; coalesce changes
 and avoid unchanged writes. Validate version/length/ranges and use safe defaults
-on invalid storage. Factory reset restores all defaults and releases HID. Keep
+on invalid storage. Factory reset restores all defaults, releases HID, and
+force-writes one clean default preference record even if RAM already equals the
+defaults. Keep
 upstream sensor mixer, rotation, acceleration, 1 ms synchronization and boot fixes.
 No unbounded queues, busy waits, or heap allocations in critical input paths.
 Feedback faults must not disable pointing. Preserve bootloader/UF2 recovery.
