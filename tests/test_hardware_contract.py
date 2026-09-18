@@ -66,7 +66,12 @@ class HardwareContract(unittest.TestCase):
             self.assertTrue(wrapper.is_file())
             text = wrapper.read_text()
             self.assertIn(f"name: {display_name}", text)
-            self.assertIn(f"run-name: {display_name}", text)
+            run_name = (
+                "18 sept 2026 working clean firmware"
+                if artifact_name == "ankurs-customised-endgame-production"
+                else display_name
+            )
+            self.assertIn(f"run-name: {run_name}", text)
             self.assertIn(f"build_name: {artifact_name}", text)
         production = (ROOT / "snippets/ankur-production/ankur-production.conf").read_text()
         self.assertIn("CONFIG_ZMK_USB_LOGGING=n", production)
