@@ -57,21 +57,16 @@ class HardwareContract(unittest.TestCase):
         self.assertIn("sha256sum", workflow)
         names = {
             "ankurs-customised-endgame-production":
-                "ankurs customised endgame firmware production",
+                "ESB CORRECTIONS",
             "ankurs-customised-endgame-debug":
-                "ankurs customised endgame firmware debug",
+                "ESB CORRECTIONS DEBUG",
         }
         for artifact_name, display_name in names.items():
             wrapper = ROOT / f".github/workflows/{artifact_name}.yml"
             self.assertTrue(wrapper.is_file())
             text = wrapper.read_text()
             self.assertIn(f"name: {display_name}", text)
-            run_name = (
-                "18 sept 2026 working clean firmware"
-                if artifact_name == "ankurs-customised-endgame-production"
-                else display_name
-            )
-            self.assertIn(f"run-name: {run_name}", text)
+            self.assertIn(f"run-name: {display_name}", text)
             self.assertIn(f"build_name: {artifact_name}", text)
         production = (ROOT / "snippets/ankur-production/ankur-production.conf").read_text()
         self.assertIn("CONFIG_ZMK_USB_LOGGING=n", production)
@@ -105,6 +100,95 @@ class HardwareContract(unittest.TestCase):
         conf = (ROOT / "config/efogtech_trackball_0.conf").read_text()
         self.assertIn("CONFIG_ZMK_IDLE_TIMEOUT=900000", conf)
         self.assertIn("CONFIG_ZMK_IDLE_SLEEP_TIMEOUT=900000", conf)
+
+    def test_esb_lifecycle_hardening(self):
+        build = (
+            ROOT / ".github/workflows/ankur-build.yml"
+        ).read_text()
+
+        self.assertIn(
+            "apply-esb-lifecycle-fix.py",
+            build,
+        )
+
+        patcher = (
+            ROOT / "scripts/apply-esb-lifecycle-fix.py"
+        ).read_text()
+
+        for token in (
+            "zmk_esb_hid_relay_reset_state",
+            "zmk_esb_hid_relay_sync_neutral",
+            "zmk_esb_input_reset_all",
+            "zmk_esb_input_sync_neutral_all",
+            "esb_transport_flush_tx",
+            "EXPECTED_SHA = \"89b695a9aca6dc5a7daf4488140ef46e19fc266c\"",
+        ):
+            self.assertIn(token, patcher)
+
+        controls = (
+            ROOT / "src/controls.c"
+        ).read_text()
+
+        self.assertIn(
+            "zmk_esb_endpoint_connection_state_changed",
+            controls,
+        )
+
+        self.assertIn(
+            "ankur_controls_cancel_esb_loss",
+            controls,
+        )
+
+        self.assertIn(
+            "atomic_get(&esb_link_connected)",
+            controls,
+        )
+
+    def test_esb_correction_workflow_names(self):
+        production = (
+            ROOT /
+            ".github/workflows/ankurs-customised-endgame-production.yml"
+        ).read_text()
+
+        debug = (
+            ROOT /
+            ".github/workflows/ankurs-customised-endgame-debug.yml"
+        ).read_text()
+
+        contract = (
+            ROOT /
+            ".github/workflows/contract-checks.yml"
+        ).read_text()
+
+        self.assertIn(
+            "name: ESB CORRECTIONS",
+            production,
+        )
+
+        self.assertIn(
+            "run-name: ESB CORRECTIONS",
+            production,
+        )
+
+        self.assertIn(
+            "name: ESB CORRECTIONS DEBUG",
+            debug,
+        )
+
+        self.assertIn(
+            "run-name: ESB CORRECTIONS DEBUG",
+            debug,
+        )
+
+        self.assertIn(
+            "name: ESB CORRECTIONS CONTRACT CHECKS",
+            contract,
+        )
+
+        self.assertIn(
+            "run-name: ESB CORRECTIONS CONTRACT CHECKS",
+            contract,
+        )
 
     def test_custom_module_exposes_snippets(self):
         module = (ROOT / "zephyr/module.yml").read_text()

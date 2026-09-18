@@ -1,4 +1,5 @@
-name: Ankur firmware contract checks
+name: ESB CORRECTIONS CONTRACT CHECKS
+run-name: ESB CORRECTIONS CONTRACT CHECKS
 on:
   push:
     branches: [ankurs-customised-endgame-firmware]

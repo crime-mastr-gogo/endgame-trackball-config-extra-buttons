@@ -37,6 +37,7 @@ static int64_t deadlines[15];
 static bool guard_fired[15];
 static bool initialized;
 static bool usb_hid_active;
+static atomic_t esb_link_connected;
 
 #if IS_ENABLED(CONFIG_ZMK_BEHAVIOR_METADATA)
 #define ACTION_METADATA(label, action)                                                \
@@ -136,22 +137,56 @@ static void macro_tick(struct k_work *work) {
     k_mutex_unlock(&control_mutex);
 }
 
-void ankur_controls_cancel(void) {
+static void ankur_controls_cancel_internal(bool emit_hid_releases) {
     bool release_key=false, release_drag=false;
     uint32_t keycode=0;
+
     k_mutex_lock(&control_mutex,K_FOREVER);
+
     macro_cancel_locked(&release_key,&keycode);
+
     release_drag=drag_locked;
     drag_locked=false;
-    atomic_clear(&fine_count); atomic_clear(&scroll_count);
-    for (unsigned i=0;i<ARRAY_SIZE(deadlines);++i) deadlines[i]=0;
-    /* Suppress delayed actions until all currently held controls are released. */
-    for (unsigned i=0;i<ARRAY_SIZE(guard_fired);++i) guard_fired[i]=true;
+
+    atomic_clear(&fine_count);
+    atomic_clear(&scroll_count);
+
+    for (unsigned i=0;i<ARRAY_SIZE(deadlines);++i)
+        deadlines[i]=0;
+
+    /*
+     * Suppress delayed actions until all currently held controls have
+     * physically been released.
+     */
+    for (unsigned i=0;i<ARRAY_SIZE(guard_fired);++i)
+        guard_fired[i]=true;
+
     k_mutex_unlock(&control_mutex);
-    if (release_key)
-        raise_zmk_keycode_state_changed_from_encoded(keycode,false,k_uptime_get());
-    if (release_drag) mouse_left(false);
+
+    /*
+     * Normal lifecycle cancellation emits release events because the
+     * destination host needs to observe the release.
+     *
+     * A genuine ESB link loss is different: the ESB module already owns and
+     * resets the ESB-local HID state. Injecting those releases into normal
+     * USB/BLE HID state could create a release without a corresponding press.
+     */
+    if (emit_hid_releases && release_key)
+        raise_zmk_keycode_state_changed_from_encoded(
+            keycode,false,k_uptime_get());
+
+    if (emit_hid_releases && release_drag)
+        mouse_left(false);
+
     ankur_feedback_stop();
+}
+
+void ankur_controls_cancel(void) {
+    ankur_controls_cancel_internal(true);
+}
+
+static void ankur_controls_cancel_esb_loss(void) {
+    ankur_controls_cancel_internal(false);
 }
 
 static void power_off(struct k_work *work) {
@@ -315,6 +350,35 @@ static int reset_preferences(void) {
     return rc;
 }
 ANKUR_STUDIO_SETTINGS_RESET(ankur,reset_preferences);
+
+/*
+ * The patched ESB module declares this lifecycle callback as weak.
+ *
+ * Do not perform cleanup directly inside the ESB RX worker. Submit a work
+ * item instead and re-check the connection flag when it runs. If VERIFY
+ * completed in the meantime, cleanup is skipped instead of cancelling input
+ * belonging to the newly recovered receiver epoch.
+ */
+static void esb_disconnect_cleanup(struct k_work *work) {
+    ARG_UNUSED(work);
+
+    if (!initialized || atomic_get(&esb_link_connected)) {
+        return;
+    }
+
+    ankur_controls_cancel_esb_loss();
+    zmk_keymap_layer_to(0);
+}
+
+K_WORK_DEFINE(esb_disconnect_cleanup_work,esb_disconnect_cleanup);
+
+void zmk_esb_endpoint_connection_state_changed(bool connected) {
+    atomic_set(&esb_link_connected,connected ? 1 : 0);
+
+    if (!connected) {
+        k_work_submit(&esb_disconnect_cleanup_work);
+    }
+}
 
 static int control_event(const zmk_event_t *eh) {
     if (!initialized) return ZMK_EV_EVENT_BUBBLE;

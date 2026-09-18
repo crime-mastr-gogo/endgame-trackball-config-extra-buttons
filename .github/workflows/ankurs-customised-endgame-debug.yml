@@ -1,5 +1,5 @@
-name: ankurs customised endgame firmware debug
-run-name: ankurs customised endgame firmware debug
+name: ESB CORRECTIONS DEBUG
+run-name: ESB CORRECTIONS DEBUG
 
 on:
   push:
