@@ -1,5 +1,5 @@
-name: 18 SEPT FIXED KEYSTRING
-run-name: 18 SEPT FIXED KEYSTRING
+name: 18 SEPT RELIABILITY V2 BUILD 01
+run-name: 18 SEPT RELIABILITY V2 BUILD 01
 
 on:
   push:
@@ -16,8 +16,8 @@ jobs:
       snippets: studio-rpc-usb-uart ankur-production
       build_kind: production
 
-  fixed-keystring-dongle:
-    name: fixed-keystring-dongle
+  reliability-v2-dongle:
+    name: reliability-v2-dongle-build-01
     runs-on: ubuntu-latest
 
     container:
@@ -76,10 +76,14 @@ jobs:
           west init -l app
           west update --fetch-opt=--filter=tree:0
 
-      - name: Apply fixed-keystring dongle protocol
+      - name: Apply reliability-v2 dongle protocol
         shell: bash
         run: |
           set -euo pipefail
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/apply-esb-lifecycle-fix.py" \
+            "${DONGLE_SRC}/zmk-esb-endpoint"
 
           python3 \
             "${GITHUB_WORKSPACE}/scripts/apply-esb-keystring-indicators.py" \

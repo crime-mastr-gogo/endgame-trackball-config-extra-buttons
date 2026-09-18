@@ -227,10 +227,10 @@ class HardwareContract(unittest.TestCase):
     def test_exact_final_workflow_names_and_artifacts(self):
         names = {
             "ankurs-customised-endgame-production":
-                "18 SEPT FIXED KEYSTRING",
+                "18 SEPT RELIABILITY V2 BUILD 01",
 
             "ankurs-customised-endgame-debug":
-                "18 SEPT FIXED KEYSTRING DEBUG",
+                "18 SEPT RELIABILITY V2 DEBUG BUILD 01",
         }
 
         for artifact_name, display_name in names.items():
@@ -264,7 +264,7 @@ class HardwareContract(unittest.TestCase):
         ).read_text()
 
         self.assertIn(
-            "name: 18 SEPT FIXED KEYSTRING CONTRACT CHECKS",
+            "name: 18 SEPT RELIABILITY V2 CONTRACTS 01",
             contract,
         )
 
@@ -747,7 +747,7 @@ class HardwareContract(unittest.TestCase):
         ).read_text()
 
         self.assertIn(
-            "name: 18 SEPT FIXED KEYSTRING",
+            "name: 18 SEPT RELIABILITY V2 BUILD 01",
             production,
         )
 
@@ -812,6 +812,19 @@ class HardwareContract(unittest.TestCase):
             "apply-dongle-reliability-v2.py",
         ):
             self.assertIn(patcher, production)
+
+        lifecycle_pos = production.index(
+            "apply-esb-lifecycle-fix.py"
+        )
+        keystring_pos = production.index(
+            "apply-esb-keystring-indicators.py"
+        )
+        reliability_pos = production.index(
+            "apply-esb-reliability-v2.py"
+        )
+
+        self.assertLess(lifecycle_pos, keystring_pos)
+        self.assertLess(keystring_pos, reliability_pos)
 
         for token in (
             "zmk_hid_indicators_current_profile_is_valid",
