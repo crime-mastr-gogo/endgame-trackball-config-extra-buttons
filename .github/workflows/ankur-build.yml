@@ -6,7 +6,12 @@ on:
       build_name:
         required: true
         type: string
+
       snippets:
+        required: true
+        type: string
+
+      build_kind:
         required: true
         type: string
 
@@ -14,27 +19,36 @@ jobs:
   build:
     name: ${{ inputs.build_name }}
     runs-on: ubuntu-latest
+
     defaults:
       run:
         shell: bash
+
     container:
-      image: zmkfirmware/zmk-build-arm:stable
+      image: zmkfirmware/zmk-build-arm@sha256:edb1c953438c6f720ddb79c3762f3972013b7fbbaf4fff3592fc869983e7afc5
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Prepare isolated ZMK workspace
-        shell: bash
         run: |
           set -euo pipefail
+
           base_dir="${RUNNER_TEMP}/zmk-config"
           build_dir="${RUNNER_TEMP}/zmk-build"
+          build_log="${RUNNER_TEMP}/ankur-build.log"
+
           mkdir -p "${base_dir}/config" "${build_dir}"
+
           cp -R config/* "${base_dir}/config/"
+
           echo "BASE_DIR=${base_dir}" >> "${GITHUB_ENV}"
           echo "BUILD_DIR=${build_dir}" >> "${GITHUB_ENV}"
+          echo "BUILD_LOG=${build_log}" >> "${GITHUB_ENV}"
 
       - name: Cache pinned west modules
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
             ${{ env.BASE_DIR }}/modules
@@ -47,35 +61,79 @@ jobs:
       - name: Initialize pinned dependencies
         working-directory: ${{ env.BASE_DIR }}
         run: |
+          set -euo pipefail
+
           west init -l config
+
+          # The ZMK checkout itself is cached. Our build-time patch leaves its
+          # commit SHA unchanged but makes the worktree dirty, so always
+          # restore the pinned source before asking west to update.
+          if [ -d "${BASE_DIR}/zmk/.git" ]; then
+            git -C "${BASE_DIR}/zmk" reset --hard
+            git -C "${BASE_DIR}/zmk" clean -fd
+          fi
+
           west update --fetch-opt=--filter=tree:0
+
+          python3 "${GITHUB_WORKSPACE}/scripts/apply-zmk-reliability-fix.py" \
+            "${BASE_DIR}/zmk"
 
           python3 "${GITHUB_WORKSPACE}/scripts/apply-esb-lifecycle-fix.py" \
             "${BASE_DIR}/zmk-esb-endpoint"
 
+          python3 "${GITHUB_WORKSPACE}/scripts/apply-pmw3610-cleanup.py" \
+            "${BASE_DIR}/zmk-pmw3610-driver"
+
+          git -C "${BASE_DIR}/zmk" diff --check
           git -C "${BASE_DIR}/zmk-esb-endpoint" diff --check
+          git -C "${BASE_DIR}/zmk-pmw3610-driver" diff --check
 
           west zephyr-export
 
       - name: Build trackball firmware
         working-directory: ${{ env.BASE_DIR }}
         run: |
-          west build -s zmk/app -d "${BUILD_DIR}" -b efogtech_trackball_0 \
-            -S "${{ inputs.snippets }}" -- \
+          set -euo pipefail
+          set -o pipefail
+
+          west build \
+            -s zmk/app \
+            -d "${BUILD_DIR}" \
+            -b efogtech_trackball_0 \
+            -S "${{ inputs.snippets }}" \
+            -- \
             -DZMK_CONFIG="${BASE_DIR}/config" \
             -DZMK_EXTRA_MODULES="${GITHUB_WORKSPACE}" \
-            -DCONFIG_ZMK_STUDIO=y
+            -DCONFIG_ZMK_STUDIO=y \
+            2>&1 | tee "${BUILD_LOG}"
+
+      - name: Verify build health and memory headroom
+        run: |
+          set -euo pipefail
+
+          python3 \
+            "${GITHUB_WORKSPACE}/scripts/check-build-health.py" \
+            "${{ inputs.build_kind }}" \
+            "${BUILD_LOG}"
 
       - name: Package UF2 and checksum
         run: |
           set -euo pipefail
-          mkdir -p package
-          cp "${BUILD_DIR}/zephyr/zmk.uf2" "package/${{ inputs.build_name }}.uf2"
-          cd package
-          sha256sum "${{ inputs.build_name }}.uf2" > SHA256SUMS.txt
 
-      - name: Upload ${{ inputs.build_name }}
-        uses: actions/upload-artifact@v4
+          mkdir -p package
+
+          cp \
+            "${BUILD_DIR}/zephyr/zmk.uf2" \
+            "package/${{ inputs.build_name }}.uf2"
+
+          cd package
+
+          sha256sum \
+            "${{ inputs.build_name }}.uf2" \
+            > SHA256SUMS.txt
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ inputs.build_name }}
           path: package
@@ -83,7 +141,10 @@ jobs:
 
       - name: Print Kconfig on failure
         if: failure()
-        run: test ! -f "${BUILD_DIR}/zephyr/.config" || grep -v -e '^#' -e '^$' "${BUILD_DIR}/zephyr/.config" | sort
+        run: |
+          test ! -f "${BUILD_DIR}/zephyr/.config" || \
+            grep -v -e '^#' -e '^$' \
+            "${BUILD_DIR}/zephyr/.config" | sort
 
       - name: Print devicetree on failure
         if: failure()

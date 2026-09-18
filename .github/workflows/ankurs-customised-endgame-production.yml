@@ -1,5 +1,5 @@
-name: ESB CORRECTIONS
-run-name: ESB CORRECTIONS
+name: 18 SEPT CODE IMPROVEMENTS
+run-name: 18 SEPT CODE IMPROVEMENTS
 
 on:
   push:
@@ -12,3 +12,4 @@ jobs:
     with:
       build_name: ankurs-customised-endgame-production
       snippets: studio-rpc-usb-uart ankur-production
+      build_kind: production

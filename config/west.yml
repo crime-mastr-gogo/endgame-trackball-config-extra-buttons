@@ -2,62 +2,55 @@ manifest:
   remotes:
     - name: efogdev
       url-base: https://github.com/efogdev
+
   projects:
     - name: zmk
       remote: efogdev
-      revision: "50d57079"
+      revision: "50d5707901f3dd89f967cf4fee90735758fd9766"
       import: app/west.yml
+
     - name: zmk-pmw3610-driver
       remote: efogdev
-      revision: "d5d2e1a"
+      revision: "d5d2e1a6607a60ff8e8cde9cf2d33e49763ee7f6"
+
     - name: zmk-pointer-2s-mixer
       remote: efogdev
-      revision: "8f41b5e"
+      revision: "8f41b5e6d971d8973873a465e678c88a36e86c8c"
+
     - name: zmk-axis-clamper
       remote: efogdev
-      revision: "637719f"
+      revision: "637719fcc3703b538c0f16fd127a6901f8e4175d"
+
     - name: zmk-report-rate-limit
       remote: efogdev
-      revision: "20e0742"
-    - name: zmk-ec11-ish-driver
-      remote: efogdev
-      revision: "7b0828b"
-    - name: zmk-auto-hold
-      remote: efogdev
-      revision: "e3b649f"
-    - name: zmk-adaptive-feedback
-      remote: efogdev
-      revision: "b0a9f02"
-    - name: zmk-behavior-follower
-      remote: efogdev
-      revision: "c27fe57"
-    - name: zmk-keymap-shell
-      remote: efogdev
-      revision: "b712a64"
+      revision: "20e074280bc6e40206c6efb647d9f5ce5c3f8ecb"
+
     - name: zmk-acceleration-curves
       remote: efogdev
-      revision: "f598fde"
+      revision: "f598fdef3d63cd7310a6506b9d88a75abc2d0f2b"
+
     - name: zmk-input-processor-rotate-plane
       remote: efogdev
-      revision: "86901be"
+      revision: "86901be4463d02d2a653d2d2d708068baba42b04"
+
     - name: zmk-runtime-config
       remote: efogdev
-      revision: "55fabb6"
+      revision: "55fabb61e9466df5e8c8b6d933da02a154aa8b56"
+
     - name: zmk-bistable-behavior
       remote: efogdev
-      revision: "652ae06"
-    - name: zmk-ble-shell
-      remote: efogdev
-      revision: "3aa9bfa"
+      revision: "652ae06696cf5ed5b5d3c82c146d3edc6d23fa98"
+
     - name: zmk-esb-endpoint
       remote: efogdev
-      revision: "89b695a"
+      revision: "89b695a9aca6dc5a7daf4488140ef46e19fc266c"
       submodules: true
-    - name: zmk-feedback-common
-      remote: efogdev
-      revision: "92251ce"
+
+    # Retained as a build-time Kconfig dependency of the pinned ESB module.
+    # CONFIG_ZMK_ESB_ENDPOINT_SHELL_RELAY remains disabled.
     - name: zmk-shell-relay-core
       remote: efogdev
-      revision: "b4a7eb0"
+      revision: "b4a7eb0b7668d0ff08ecba9a2cb468fb3482df22"
+
   self:
     path: config

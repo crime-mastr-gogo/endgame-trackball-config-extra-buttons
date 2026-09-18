@@ -6,13 +6,7 @@
 #include <input/processors/report_rate_limit.dtsi>
 #include <input/processors/accel_curve.dtsi>
 #include <input/processors/rotate_plane.dtsi>
-#include <behaviors/rate_limit.dtsi>
-#include <behaviors/auto_hold.dtsi>
-#include <behaviors/switch_keymap.dtsi>
-#include <behaviors/mouse_scroll.dtsi>
 #include <behaviors/mouse_key_press.dtsi>
-#include <behaviors/af_toggle.dtsi>
-#include <behaviors/bistable_toggle.dtsi>
 
 &zip_2s_mixer {
 	status = "okay";
@@ -24,9 +18,6 @@
 	sensor1-pos = [31 4B 2D];  // X Y Z
 	sensor2-pos = [C1 3C 2D];
 
-	feedback-gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
-	feedback-extra-gpios = <&gpio1 0 GPIO_ACTIVE_HIGH>;
-	twist-feedback-delay = <5>;
 };
 
 / {
@@ -121,32 +112,9 @@
 		input-processors = <&zip_2s_mixer INPUT_MIXER_SENSOR2>;
 	};
 
-	behaviors {
-		bst_tog {
-			display-name = "Toggle OS-dependent behaviors";
-		};
-
-		mouse_scroll {
-			display-name = "Reserved [3]";
-		};
-
-		mouse_move {
-			display-name = "Reserved [4]";
-		};
-
-		zbs_adv {
-			display-name = "Advertise MUI over Bluetooth";
-		};
-	};
-};
-
-&msc {
-	time-to-max-speed-ms = <1>;
-	acceleration-exponent = <0>;
 };
 
 &mkp_input_listener { input-processors = <&esb_ip>; };
-&msc_input_listener { input-processors = <&esb_ip>; };
 
 &spi0 {
 	status = "okay";

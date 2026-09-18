@@ -1,5 +1,5 @@
-name: ESB CORRECTIONS DEBUG
-run-name: ESB CORRECTIONS DEBUG
+name: 18 SEPT CODE IMPROVEMENTS DEBUG
+run-name: 18 SEPT CODE IMPROVEMENTS DEBUG
 
 on:
   push:
@@ -12,3 +12,4 @@ jobs:
     with:
       build_name: ankurs-customised-endgame-debug
       snippets: studio-rpc-usb-uart zmk-usb-logging
+      build_kind: debug

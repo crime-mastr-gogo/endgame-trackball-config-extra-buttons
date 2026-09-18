@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/logging/log.h>
 #include <drivers/behavior.h>
 #include <drivers/p2sm_runtime.h>
 #include <zmk/behavior.h>
@@ -27,7 +29,11 @@
 #include "ankur/controls.h"
 #include "ankur/settings.h"
 #include "ankur/feedback.h"
+#include "ankur/pointer.h"
+#include "ankur/timing.h"
 #include "ankur/studio_reset.h"
+
+LOG_MODULE_REGISTER(ankur_controls, CONFIG_ZMK_LOG_LEVEL);
 
 K_MUTEX_DEFINE(control_mutex);
 static atomic_t fine_count, scroll_count;
@@ -83,6 +89,17 @@ static const struct behavior_parameter_metadata ankur_metadata = {
 
 bool ankur_fine_active(void) { return atomic_get(&fine_count)>0; }
 bool ankur_drag_scroll_active(void) { return atomic_get(&scroll_count)>0; }
+
+static bool store_preferences(struct ankur_preferences preferences) {
+    int rc = ankur_settings_set(preferences);
+
+    if (rc) {
+        LOG_ERR("Failed to update preferences: %d", rc);
+        return false;
+    }
+
+    return true;
+}
 
 static void feedback(enum ankur_feedback_event event) {
     struct ankur_preferences p=ankur_settings_get();
@@ -175,8 +192,13 @@ static void ankur_controls_cancel_internal(bool emit_hid_releases) {
         raise_zmk_keycode_state_changed_from_encoded(
             keycode,false,k_uptime_get());
 
-    if (emit_hid_releases && release_drag)
-        mouse_left(false);
+    if (emit_hid_releases && release_drag) {
+        int rc = mouse_left(false);
+
+        if (rc < 0) {
+            LOG_ERR("Failed to release Drag Lock button: %d", rc);
+        }
+    }
 
     ankur_feedback_stop();
 }
@@ -191,10 +213,33 @@ static void ankur_controls_cancel_esb_loss(void) {
 
 static void power_off(struct k_work *work) {
     ARG_UNUSED(work);
+
     ankur_controls_cancel();
-    ankur_settings_flush();
     zmk_endpoints_clear_current();
-    zmk_pm_soft_off();
+
+    int rc = ankur_settings_flush();
+
+    if (rc) {
+        /*
+         * One bounded retry. A flash problem must not create an infinite
+         * shutdown loop or block normal input indefinitely.
+         */
+        k_msleep(25);
+        rc = ankur_settings_flush();
+
+        if (rc) {
+            LOG_ERR(
+                "Preference flush failed before power-off: %d",
+                rc
+            );
+        }
+    }
+
+    rc = zmk_pm_soft_off();
+
+    if (rc) {
+        LOG_ERR("Soft power-off failed: %d", rc);
+    }
 }
 K_WORK_DELAYABLE_DEFINE(off_work,power_off);
 
@@ -207,7 +252,21 @@ static void perform(uint8_t action) {
         drag_locked=!drag_locked;
         bool drag_now=drag_locked;
         k_mutex_unlock(&control_mutex);
-        mouse_left(drag_now);
+        int drag_rc=mouse_left(drag_now);
+
+        if (drag_rc < 0) {
+            k_mutex_lock(&control_mutex,K_FOREVER);
+            drag_locked=!drag_now;
+            k_mutex_unlock(&control_mutex);
+
+            LOG_ERR(
+                "Failed to update Drag Lock button state: %d",
+                drag_rc
+            );
+
+            break;
+        }
+
         feedback(AK_DRAG_LOCK); break;
     case AK_STRING:
         k_mutex_lock(&control_mutex,K_FOREVER);
@@ -219,47 +278,105 @@ static void perform(uint8_t action) {
         break;
     case AK_POINTER_INC: case AK_POINTER_DEC:
         old=p.pointer; p.pointer=ankur_level_step(old,action==AK_POINTER_INC);
-        ankur_settings_set(p); apply_sensitivity();
+
+        if (!store_preferences(p)) break;
+
+        apply_sensitivity();
+
         feedback(p.pointer==old ?
                  (action==AK_POINTER_INC?AK_POINTER_MAX:AK_POINTER_MIN) :
                  (action==AK_POINTER_INC?AK_POINTER_UP:AK_POINTER_DOWN)); break;
     case AK_TWIST_INC: case AK_TWIST_DEC:
         old=p.twist; p.twist=ankur_level_step(old,action==AK_TWIST_INC);
-        ankur_settings_set(p); apply_sensitivity();
+
+        if (!store_preferences(p)) break;
+
+        apply_sensitivity();
+
         feedback(p.twist==old ?
                  (action==AK_TWIST_INC?AK_TWIST_MAX:AK_TWIST_MIN) :
                  (action==AK_TWIST_INC?AK_TWIST_UP:AK_TWIST_DOWN)); break;
     case AK_NEXT: case AK_PREV:
         ankur_controls_cancel();
         zmk_endpoints_clear_current();
-        zmk_ble_prof_select((zmk_ble_active_profile_index()+
-                            (action==AK_NEXT?1:ZMK_BLE_PROFILE_COUNT-1))%
-                           ZMK_BLE_PROFILE_COUNT);
+        int profile_rc =
+            zmk_ble_prof_select(
+                (zmk_ble_active_profile_index() +
+                 (action==AK_NEXT
+                    ? 1
+                    : ZMK_BLE_PROFILE_COUNT-1)) %
+                ZMK_BLE_PROFILE_COUNT
+            );
+
+        if (profile_rc) {
+            LOG_ERR(
+                "Bluetooth/ESB profile switch failed: %d",
+                profile_rc
+            );
+        }
+
         break;
     case AK_OFF:
         ankur_controls_cancel(); feedback(AK_POWER_OFF);
         k_work_reschedule(&off_work,K_MSEC(500)); break;
     case AK_UNLOCK: zmk_studio_core_unlock(); feedback(AK_STUDIO_UNLOCK); break;
-    case AK_SCROLL: p.high_res=!p.high_res; ankur_settings_set(p);
-        feedback(p.high_res?AK_HIGH_RES:AK_STANDARD); break;
+    case AK_SCROLL:
+        p.high_res=!p.high_res;
+
+        if (!store_preferences(p)) break;
+
+        ankur_pointer_set_high_res(p.high_res);
+        feedback(p.high_res?AK_HIGH_RES:AK_STANDARD);
+        break;
     case AK_BT_CLEAR:
         if (zmk_ble_active_profile_index()<5) {
-            ankur_controls_cancel(); zmk_ble_clear_bonds(); feedback(AK_CLEAR_CURRENT);
+            ankur_controls_cancel();
+            zmk_endpoints_clear_current();
+            zmk_ble_clear_bonds();
+            feedback(AK_CLEAR_CURRENT);
         }
         break;
     case AK_BT_CLEAR_ALL:
         ankur_controls_cancel();
+        zmk_endpoints_clear_current();
+
         /* ZMK clears BT bonds; ESB pairing is stored by a separate module. */
-        zmk_ble_clear_all_bonds(); feedback(AK_CLEAR_ALL); break;
+        zmk_ble_clear_all_bonds();
+
+        feedback(AK_CLEAR_ALL); break;
     case AK_SENS_RESET:
-        p.pointer=ANKUR_POINTER_DEFAULT; p.twist=ANKUR_TWIST_DEFAULT;
-        ankur_settings_set(p); apply_sensitivity(); feedback(AK_RESET_SENS); break;
+        p.pointer=ANKUR_POINTER_DEFAULT;
+        p.twist=ANKUR_TWIST_DEFAULT;
+
+        if (!store_preferences(p)) break;
+
+        apply_sensitivity();
+        feedback(AK_RESET_SENS);
+        break;
     case AK_VIB_TOGGLE:
-        p.vibration=!p.vibration; ankur_settings_set(p);
-        ankur_feedback_play(ankur_patterns[p.vibration?AK_VIB_ON:AK_VIB_OFF],p.leds,true); break;
+        p.vibration=!p.vibration;
+
+        if (!store_preferences(p)) break;
+
+        ankur_feedback_play(
+            ankur_patterns[p.vibration?AK_VIB_ON:AK_VIB_OFF],
+            p.leds,
+            true
+        );
+
+        break;
     case AK_LED_TOGGLE:
-        p.leds=!p.leds; ankur_settings_set(p);
-        ankur_feedback_play(ankur_patterns[p.leds?AK_LED_ON:AK_LED_OFF],true,p.vibration); break;
+        p.leds=!p.leds;
+
+        if (!store_preferences(p)) break;
+
+        ankur_feedback_play(
+            ankur_patterns[p.leds?AK_LED_ON:AK_LED_OFF],
+            true,
+            p.vibration
+        );
+
+        break;
     case AK_REPORT_TWIST:
         ankur_feedback_play(ankur_report(p.twist,5,AK_BLUE),p.leds,p.vibration); break;
     case AK_REPORT_POINTER:
@@ -281,7 +398,7 @@ static void guard_tick(struct k_work *work) {
     int64_t now=k_uptime_get(), next=INT64_MAX;
     for (unsigned i=0;i<ARRAY_SIZE(deadlines);++i) {
         if (!deadlines[i] || guard_fired[i]) continue;
-        if (now>=deadlines[i]) {
+        if (ankur_deadline_due(now,deadlines[i])) {
             guard_fired[i]=true;
             deadlines[i]=0;
             due[due_count++]=held_actions[i];
@@ -303,7 +420,11 @@ static int control_press(struct zmk_behavior_binding *binding,struct zmk_behavio
         held_mode=true;
     } else if (action==AK_STRING || action==AK_OFF || action==AK_BT_CLEAR ||
                action==AK_BT_CLEAR_ALL || action==AK_SENS_RESET) {
-        deadlines[event.position]=k_uptime_get()+(action==AK_STRING?1000:2000);
+        deadlines[event.position]=
+            k_uptime_get() +
+            (action==AK_STRING
+                ? ANKUR_STRING_HOLD_MS
+                : ANKUR_PROTECTED_HOLD_MS);
         delayed=true;
     }
     k_mutex_unlock(&control_mutex);
@@ -345,8 +466,25 @@ BEHAVIOR_DT_INST_DEFINE(0,NULL,NULL,NULL,NULL,POST_KERNEL,
 
 static int reset_preferences(void) {
     ankur_controls_cancel();
+
+    /*
+     * Studio factory-reset is a lifecycle boundary. Explicitly converge the
+     * active host to neutral HID state before resetting persistent state.
+     */
+    zmk_endpoints_clear_current();
+    zmk_keymap_layer_to(0);
+
     int rc=ankur_settings_reset();
+
+    if (rc) {
+        LOG_ERR("Factory preference reset failed: %d", rc);
+    }
+
+    struct ankur_preferences p=ankur_settings_get();
+
+    ankur_pointer_set_high_res(p.high_res);
     apply_sensitivity();
+
     return rc;
 }
 ANKUR_STUDIO_SETTINGS_RESET(ankur,reset_preferences);
@@ -380,6 +518,57 @@ void zmk_esb_endpoint_connection_state_changed(bool connected) {
     }
 }
 
+/*
+ * BLE may disappear without changing the selected profile. Clean custom
+ * held state and ZMK's HID state when the active Bluetooth link is lost.
+ *
+ * A short delayed work item lets ZMK finish updating its connection table
+ * before we inspect zmk_ble_active_profile_is_connected().
+ */
+static void ble_disconnect_cleanup(struct k_work *work) {
+    ARG_UNUSED(work);
+
+    if (!initialized || usb_hid_active) {
+        return;
+    }
+
+    if (zmk_ble_active_profile_index() >=
+        (ZMK_BLE_PROFILE_COUNT - 1)) {
+        /* Last slot belongs to ESB and has its own lifecycle handler. */
+        return;
+    }
+
+    if (zmk_ble_active_profile_is_connected()) {
+        return;
+    }
+
+    ankur_controls_cancel();
+    zmk_endpoints_clear_current();
+    zmk_keymap_layer_to(0);
+}
+
+K_WORK_DELAYABLE_DEFINE(
+    ble_disconnect_cleanup_work,
+    ble_disconnect_cleanup
+);
+
+static void ankur_bt_disconnected(
+    struct bt_conn *conn,
+    uint8_t reason
+) {
+    ARG_UNUSED(conn);
+    ARG_UNUSED(reason);
+
+    k_work_reschedule(
+        &ble_disconnect_cleanup_work,
+        K_MSEC(10)
+    );
+}
+
+BT_CONN_CB_DEFINE(ankur_bt_conn_callbacks) = {
+    .disconnected = ankur_bt_disconnected,
+};
+
 static int control_event(const zmk_event_t *eh) {
     if (!initialized) return ZMK_EV_EVENT_BUBBLE;
     const struct zmk_activity_state_changed *activity=as_zmk_activity_state_changed(eh);
@@ -401,7 +590,20 @@ static int control_event(const zmk_event_t *eh) {
         bool now_hid=zmk_usb_get_conn_state()==ZMK_USB_CONN_HID;
         if (now_hid!=usb_hid_active) {
             ankur_controls_cancel();
-            zmk_endpoints_select_transport(now_hid?ZMK_TRANSPORT_USB:ZMK_TRANSPORT_BLE);
+
+            int rc=zmk_endpoints_select_transport(
+                now_hid
+                    ? ZMK_TRANSPORT_USB
+                    : ZMK_TRANSPORT_BLE
+            );
+
+            if (rc) {
+                LOG_ERR(
+                    "Transport selection failed: %d",
+                    rc
+                );
+            }
+
             usb_hid_active=now_hid;
             feedback(now_hid?AK_USB_ON:AK_USB_OFF);
         }
@@ -417,9 +619,28 @@ ZMK_SUBSCRIPTION(ankur_controls,zmk_usb_conn_state_changed);
 
 static void initialize(struct k_work *work) {
     ARG_UNUSED(work);
+
+    struct ankur_preferences p=ankur_settings_get();
+
+    ankur_pointer_set_high_res(p.high_res);
     apply_sensitivity();
-    usb_hid_active=zmk_usb_get_conn_state()==ZMK_USB_CONN_HID;
-    zmk_endpoints_select_transport(usb_hid_active?ZMK_TRANSPORT_USB:ZMK_TRANSPORT_BLE);
+
+    usb_hid_active=
+        zmk_usb_get_conn_state()==ZMK_USB_CONN_HID;
+
+    int rc=zmk_endpoints_select_transport(
+        usb_hid_active
+            ? ZMK_TRANSPORT_USB
+            : ZMK_TRANSPORT_BLE
+    );
+
+    if (rc) {
+        LOG_ERR(
+            "Initial transport selection failed: %d",
+            rc
+        );
+    }
+
     initialized=true;
 }
 K_WORK_DELAYABLE_DEFINE(initialize_work,initialize);

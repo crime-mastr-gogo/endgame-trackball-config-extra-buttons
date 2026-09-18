@@ -454,21 +454,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_board,
 SHELL_CMD_REGISTER(board, &sub_board, "Control the device", NULL);
 #endif
 
-static const struct device *p1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
 static const struct device *uart = DEVICE_DT_GET(DT_NODELABEL(uart0));
 
 static int16_t settings_log_source_id = -1;
 static uint32_t settings_log_saved_level;
-
-static void set_3v3_en(const bool en) {
-    gpio_pin_configure(p1, 0, GPIO_OUTPUT);
-    gpio_pin_set(p1, 0, en);
-}
-
-static void set_rgb_en(const bool en) {
-    gpio_pin_configure(p1, 3, GPIO_OUTPUT);
-    gpio_pin_set(p1, 3, en);
-}
 
 static void rgb_hw_check_work_handler(struct k_work *work) {
     settings_load_subtree("board/rgb");
@@ -491,9 +480,6 @@ static K_WORK_DELAYABLE_DEFINE(rgb_hw_check_work, rgb_hw_check_work_handler);
 static int pinmux_efgtch_trckbl_init(void) {
     pm_device_action_run(uart, PM_DEVICE_ACTION_SUSPEND);
     pm_device_action_run(uart, PM_DEVICE_ACTION_TURN_OFF);
-
-    set_3v3_en(false);
-    set_rgb_en(false);
 
 #ifdef CONFIG_LOG_DOMAIN_ID
     const uint32_t src_cnt = log_src_cnt_get(CONFIG_LOG_DOMAIN_ID);

@@ -38,15 +38,6 @@ static inline uint8_t ankur_level_step(uint8_t level, bool up) {
     return up ? (level < 20 ? level + 1 : 20) : (level > 1 ? level - 1 : 1);
 }
 
-/* Signed fixed-point scaling; separate remainder for every axis and mode.
- * 64-bit intermediate prevents overflow at full sensor delta and sensitivity. */
-static inline int32_t ankur_scale(int32_t value, int32_t coefficient, int64_t *rem) {
-    int64_t v = (int64_t)value * coefficient + *rem;
-    int32_t out = (int32_t)(v / 1000000);
-    *rem = v - (int64_t)out * 1000000;
-    return out;
-}
-
 enum ankur_color { AK_RED, AK_GREEN, AK_BLUE, AK_CYAN, AK_MAGENTA,
     AK_PURPLE, AK_ORANGE, AK_DARK_GREEN, AK_LIGHT_GREEN, AK_RAINBOW };
 enum ankur_effect { AK_FLASH, AK_BREATHE, AK_FADE };

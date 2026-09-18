@@ -1,17 +1,33 @@
-name: ESB CORRECTIONS CONTRACT CHECKS
-run-name: ESB CORRECTIONS CONTRACT CHECKS
+name: 18 SEPT CODE IMPROVEMENTS CONTRACT CHECKS
+run-name: 18 SEPT CODE IMPROVEMENTS CONTRACT CHECKS
+
 on:
   push:
     branches: [ankurs-customised-endgame-firmware]
   pull_request:
+
 jobs:
   contracts:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Verify GPIO ownership and layout
-        run: python3 -m unittest discover -s tests -v
-      - name: Verify arithmetic, preferences and feedback policy
+      - name: Checkout configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify GPIO ownership, lifecycle and build contracts
         run: |
-          gcc -std=c11 -Wall -Wextra -Werror -fsanitize=undefined,address -Iinclude tests/test_policy.c -o /tmp/ankur-policy-test
+          python3 -m unittest discover -s tests -v
+
+      - name: Verify arithmetic, preferences and timing policy
+        run: |
+          gcc \
+            -std=c11 \
+            -Wall \
+            -Wextra \
+            -Werror \
+            -fsanitize=undefined,address \
+            -Iinclude \
+            tests/test_policy.c \
+            -o /tmp/ankur-policy-test
+
           /tmp/ankur-policy-test
