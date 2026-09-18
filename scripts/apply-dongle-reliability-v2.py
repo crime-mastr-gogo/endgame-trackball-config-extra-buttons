@@ -142,6 +142,23 @@ usb.write_text(text)
 
 replace_once(
     "dongle-1k-firmware/src/main.c",
+    """        uint8_t indicators = 0;
+
+        const bool valid =
+            usb_hid_get_keyboard_leds(&indicators);
+""",
+    """        const struct esb_pkt_hid_indicator_req *req =
+            (const void *)data;
+
+        uint8_t indicators = 0;
+
+        const bool valid =
+            usb_hid_get_keyboard_leds(&indicators);
+""",
+)
+
+replace_once(
+    "dongle-1k-firmware/src/main.c",
     """        const struct esb_pkt_hid_indicators response = {
             .type = ESB_PKT_HID_INDICATORS,
             .indicators = indicators,
@@ -322,6 +339,7 @@ required = {
         "neutral_mouse[9]",
     ),
     "dongle-1k-firmware/src/main.c": (
+        "const struct esb_pkt_hid_indicator_req *req",
         ".seq = req->seq",
         "case ESB_PKT_HOST_NEUTRAL:",
         "case ESB_PKT_HELD_KEEPALIVE:",

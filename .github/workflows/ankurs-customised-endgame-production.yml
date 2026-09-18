@@ -1,5 +1,5 @@
-name: 18 SEPT RELIABILITY V2 BUILD 01
-run-name: 18 SEPT RELIABILITY V2 BUILD 01
+name: 18 SEPT RELIABILITY V2 BUILD 02
+run-name: 18 SEPT RELIABILITY V2 BUILD 02
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       build_kind: production
 
   reliability-v2-dongle:
-    name: reliability-v2-dongle-build-01
+    name: reliability-v2-dongle-build-02
     runs-on: ubuntu-latest
 
     container:

@@ -227,10 +227,10 @@ class HardwareContract(unittest.TestCase):
     def test_exact_final_workflow_names_and_artifacts(self):
         names = {
             "ankurs-customised-endgame-production":
-                "18 SEPT RELIABILITY V2 BUILD 01",
+                "18 SEPT RELIABILITY V2 BUILD 02",
 
             "ankurs-customised-endgame-debug":
-                "18 SEPT RELIABILITY V2 DEBUG BUILD 01",
+                "18 SEPT RELIABILITY V2 DEBUG BUILD 02",
         }
 
         for artifact_name, display_name in names.items():
@@ -264,7 +264,7 @@ class HardwareContract(unittest.TestCase):
         ).read_text()
 
         self.assertIn(
-            "name: 18 SEPT RELIABILITY V2 CONTRACTS 01",
+            "name: 18 SEPT RELIABILITY V2 CONTRACTS 02",
             contract,
         )
 
@@ -747,7 +747,7 @@ class HardwareContract(unittest.TestCase):
         ).read_text()
 
         self.assertIn(
-            "name: 18 SEPT RELIABILITY V2 BUILD 01",
+            "name: 18 SEPT RELIABILITY V2 BUILD 02",
             production,
         )
 
@@ -864,6 +864,7 @@ class HardwareContract(unittest.TestCase):
 
         for token in (
             "usb_hid_clear_all",
+            "const struct esb_pkt_hid_indicator_req *req",
             ".seq = req->seq",
             "case ESB_PKT_HOST_NEUTRAL:",
             "case ESB_PKT_HELD_KEEPALIVE:",
